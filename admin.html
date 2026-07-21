@@ -283,34 +283,27 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
-const STORAGE_KEY = 'reelsmap_mvp_v3';
+const STORAGE_KEY = 'reelsmap_mvp_v4_verified';
 const ADMIN_SESSION = 'reelsmap_admin_session';
 const DEMO_PASSWORD = 'reelsmap2026';
 
 const seed = {
   settings: {
-    brandName:'릴스맛집지도', brandTagline:'SNS에서 뜬 곳만 한눈에', brandIcon:'🍜',
-    eyebrow:'📍 성수동 한정 베타', heroTitle:'릴스에서 뜬 성수 맛집을<br/>지도에서 바로 발견하세요',
-    heroSubtitle:'조회수만 높은 곳이 아니라, 바이럴·데이트·숨은 맛집을 목적에 맞게 골라보세요.',
-    searchPlaceholder:'성수 맛집, 카페, 술집 검색', primary:'#ff4d2e', cardRadius:22,
-    legal:'본 서비스는 원본 SNS 콘텐츠를 저장하거나 재업로드하지 않으며, 외부 링크를 통해 원본 게시물로 이동합니다. 권리 침해 또는 삭제 요청은 신고하기를 통해 접수해주세요.'
+    brandName:'릴스맛집지도', brandTagline:'100만 조회 릴스만 검증 등록', brandIcon:'🍜',
+    eyebrow:'📍 성수동 · 100만+ 릴스 검증판', heroTitle:'조회수 100만을 넘긴<br/>성수 맛집 릴스만 모았습니다',
+    heroSubtitle:'원본 릴스 URL과 공개 조회수를 직접 확인한 맛집만 지도에 표시합니다. 영상과 썸네일은 저장하지 않습니다.',
+    searchPlaceholder:'100만+ 성수 맛집 검색', primary:'#ff4d2e', cardRadius:22,
+    legal:'본 서비스는 원본 SNS 콘텐츠·영상·썸네일을 저장하거나 재업로드하지 않습니다. 공개된 원본 릴스 링크와 출처만 제공하며, 조회수는 확인 시점 기준입니다. 권리자 삭제·수정 요청은 신고하기를 통해 접수해주세요.'
   },
   categories: [
     {id:'all',name:'전체',icon:'🗺️',enabled:true},
-    {id:'viral',name:'바이럴',icon:'🔥',enabled:true},
-    {id:'hidden',name:'숨은 맛집',icon:'💎',enabled:true},
+    {id:'million',name:'100만+',icon:'💯',enabled:true},
     {id:'date',name:'데이트',icon:'💕',enabled:true},
+    {id:'cafe',name:'카페·디저트',icon:'☕',enabled:true},
     {id:'bar',name:'술집',icon:'🍺',enabled:true},
     {id:'rising',name:'급상승',icon:'📈',enabled:true}
   ],
-  restaurants: [
-    {id:1,name:'성수 파스타 연구소',address:'서울 성동구 연무장길 33',lat:37.54462,lng:127.05584,category:'양식',emoji:'🍝',description:'성수 골목의 생면 파스타와 내추럴 와인',hours:'11:30–22:00',phone:'02-000-1001',views:1280000,reels:5,creators:3,badges:['viral','date'],visible:true,featured:true,image:'',reelLinks:[{creator:'@seoul_food_lab',url:'https://www.instagram.com/reels/',views:830000},{creator:'@datebite',url:'https://www.instagram.com/reels/',views:450000}]},
-    {id:2,name:'서울숲 숯불구이',address:'서울 성동구 서울숲2길 18',lat:37.54628,lng:127.04388,category:'한식',emoji:'🥩',description:'숯향 가득한 숙성 고기와 깔끔한 반찬',hours:'16:00–24:00',phone:'02-000-1002',views:2860000,reels:9,creators:5,badges:['viral','rising'],visible:true,featured:false,image:'',reelLinks:[{creator:'@meat_seoul',url:'https://www.instagram.com/reels/',views:1760000}]},
-    {id:3,name:'연무장 디저트룸',address:'서울 성동구 연무장7길 8',lat:37.54274,lng:127.05685,category:'디저트',emoji:'🍰',description:'계절 과일 디저트와 감각적인 공간',hours:'12:00–21:00',phone:'02-000-1003',views:248000,reels:2,creators:2,badges:['hidden','date'],visible:true,featured:false,image:'',reelLinks:[{creator:'@sweetmap',url:'https://www.instagram.com/reels/',views:182000}]},
-    {id:4,name:'성수 이자카야 밤',address:'서울 성동구 아차산로7길 21',lat:37.54604,lng:127.05858,category:'술집',emoji:'🍶',description:'늦은 밤까지 이어지는 사시미와 사케',hours:'17:30–02:00',phone:'02-000-1004',views:690000,reels:4,creators:3,badges:['bar','date'],visible:true,featured:false,image:'',reelLinks:[{creator:'@night_seoul',url:'https://www.instagram.com/reels/',views:420000}]},
-    {id:5,name:'뚝섬 브런치 테이블',address:'서울 성동구 왕십리로10길 9',lat:37.54768,lng:127.04768,category:'브런치',emoji:'🥐',description:'서울숲 산책 전에 들르기 좋은 브런치',hours:'09:30–18:00',phone:'02-000-1005',views:940000,reels:6,creators:4,badges:['rising','date'],visible:true,featured:true,image:'',reelLinks:[{creator:'@brunching_day',url:'https://www.instagram.com/reels/',views:610000}]},
-    {id:6,name:'성수 골목카레',address:'서울 성동구 성수이로12길 6',lat:37.54383,lng:127.06137,category:'일식',emoji:'🍛',description:'하루 80그릇만 준비하는 진한 카레',hours:'11:30–20:30',phone:'02-000-1006',views:132000,reels:2,creators:1,badges:['hidden'],visible:true,featured:false,image:'',reelLinks:[{creator:'@smallbite',url:'https://www.instagram.com/reels/',views:97000}]}
-  ],
+  restaurants: [],
   submissions: [], reports: []
 };
 
@@ -325,6 +318,8 @@ function saveState(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),1800); }
 function fmt(n){ if(n>=1000000) return (n/1000000).toFixed(n%1000000?1:0)+'백만'; if(n>=10000) return Math.round(n/10000)+'만'; return n.toLocaleString(); }
 function esc(s=''){ return String(s).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function isInstagramReel(url=''){ return /^https:\/\/(www\.)?instagram\.com\/(reel|reels)\//i.test(String(url).trim()); }
+function hasMillionReel(links=[]){ return links.some(x=>isInstagramReel(x.url)&&Number(x.views)>=1000000); }
 
 function init(){
   applySettings(); renderFilters(); renderAll(); initMap();
@@ -361,7 +356,7 @@ function renderCards(){
   document.getElementById('resultCount').textContent=data.length+'개';
   document.getElementById('mapCount').textContent=data.length+'곳 표시';
   const cards=document.getElementById('cards');
-  if(!data.length){ cards.innerHTML='<div class="empty">조건에 맞는 맛집이 없습니다.</div>'; return; }
+  if(!data.length){ cards.innerHTML='<div class="empty"><strong>검증 완료된 100만+ 맛집을 등록 중입니다.</strong><br/><span style="color:var(--muted);font-size:12px">원본 릴스 URL과 조회수를 확인한 뒤 공개됩니다.</span></div>'; return; }
   cards.innerHTML=data.map(r=>{
     const badges=r.badges.map(id=>state.categories.find(c=>c.id===id)).filter(Boolean);
     return `<article class="card admin-editable ${selectedId===r.id?'selected':''}" onclick="selectRestaurant(${r.id})">
@@ -412,6 +407,8 @@ function openCreatorSubmit(){ document.getElementById('submitBackdrop').classLis
 function submitCreatorForm(){
   const item={id:Date.now(),creator:document.getElementById('subCreator').value.trim(),restaurant:document.getElementById('subRestaurant').value.trim(),url:document.getElementById('subUrl').value.trim(),address:document.getElementById('subAddress').value.trim(),category:document.getElementById('subCategory').value,views:Number(document.getElementById('subViews').value||0),status:'접수'};
   if(!item.creator||!item.restaurant||!item.url){ toast('계정명, 맛집명, 릴스 URL을 입력해주세요.'); return; }
+  if(!isInstagramReel(item.url)){ toast('instagram.com/reel/ 형식의 원본 링크만 등록할 수 있습니다.'); return; }
+  if(item.views<1000000){ toast('현재 베타는 조회수 100만 이상 릴스만 접수합니다.'); return; }
   state.submissions.unshift(item); saveState(); closeModal('submitBackdrop'); renderSubmissions(); toast('등록 신청이 접수되었습니다.');
 }
 function reportRestaurant(id){
@@ -486,7 +483,10 @@ function openRestaurantForm(id){
 function saveRestaurant(e,id){
   e.preventDefault(); const f=new FormData(e.target); const badges=[...e.target.querySelectorAll('input[name=badges]:checked')].map(x=>x.value);
   const links=String(f.get('links')||'').split('\n').map(x=>x.trim()).filter(Boolean).map(line=>{ const [creator,url,views]=line.split('|'); return {creator:(creator||'').trim(),url:(url||'').trim(),views:Number(views||0)}; });
-  const obj={id:id||Date.now(),name:f.get('name').trim(),category:f.get('category').trim(),address:f.get('address').trim(),lat:Number(f.get('lat')),lng:Number(f.get('lng')),emoji:f.get('emoji').trim()||'🍽️',image:f.get('image').trim(),description:f.get('description').trim(),hours:f.get('hours').trim(),phone:f.get('phone').trim(),views:Number(f.get('views')||0),reels:Number(f.get('reels')||0),creators:Number(f.get('creators')||0),badges,visible:f.get('visible')==='on',featured:f.get('featured')==='on',reelLinks:links};
+  if(!hasMillionReel(links)){ toast('조회수 100만 이상인 인스타 원본 릴스를 1개 이상 입력해주세요.'); return; }
+  if(!badges.includes('million')) badges.unshift('million');
+  const calculatedViews=links.reduce((sum,x)=>sum+Number(x.views||0),0);
+  const obj={id:id||Date.now(),name:f.get('name').trim(),category:f.get('category').trim(),address:f.get('address').trim(),lat:Number(f.get('lat')),lng:Number(f.get('lng')),emoji:f.get('emoji').trim()||'🍽️',image:f.get('image').trim(),description:f.get('description').trim(),hours:f.get('hours').trim(),phone:f.get('phone').trim(),views:calculatedViews||Number(f.get('views')||0),reels:links.length||Number(f.get('reels')||0),creators:new Set(links.map(x=>x.creator).filter(Boolean)).size||Number(f.get('creators')||0),badges,visible:f.get('visible')==='on',featured:f.get('featured')==='on',reelLinks:links};
   if(id){ const i=state.restaurants.findIndex(x=>x.id===id); state.restaurants[i]=obj; } else state.restaurants.unshift(obj);
   saveState(); closeModal('formBackdrop'); renderAll(); toast('저장했습니다.');
 }
@@ -511,7 +511,7 @@ function renderSettings(){
   <div class="field full"><label>검색창 문구</label><input name="searchPlaceholder" value="${esc(s.searchPlaceholder)}"></div>
   <div class="field"><label>포인트 컬러</label><input name="primary" type="color" value="${esc(s.primary)}"></div><div class="field"><label>카드 둥글기</label><input name="cardRadius" type="range" min="4" max="36" value="${s.cardRadius}"></div>
   <div class="field full"><label>법적 안내 문구</label><textarea name="legal">${esc(s.legal)}</textarea></div>
-  </div><div class="form-actions"><button type="button" class="danger" onclick="resetData()">데모 초기화</button><button class="primary">즉시 반영</button></div></form>`;
+  </div><div class="form-actions"><button type="button" class="danger" onclick="resetData()">검증 데이터 초기화</button><button class="primary">즉시 반영</button></div></form>`;
 }
 function saveSettings(e){ e.preventDefault(); const f=new FormData(e.target); Object.assign(state.settings,{brandName:f.get('brandName'),brandIcon:f.get('brandIcon'),brandTagline:f.get('brandTagline'),eyebrow:f.get('eyebrow'),heroTitle:f.get('heroTitle'),heroSubtitle:f.get('heroSubtitle'),searchPlaceholder:f.get('searchPlaceholder'),primary:f.get('primary'),cardRadius:Number(f.get('cardRadius')),legal:f.get('legal')}); saveState(); applySettings(); toast('문구와 디자인을 반영했습니다.'); }
 function resetData(){ if(!confirm('모든 변경 사항을 초기 데이터로 되돌릴까요?'))return; state=clone(seed); saveState(); applySettings(); renderFilters(); renderAll(); renderSettings(); toast('초기화했습니다.'); }
@@ -520,7 +520,7 @@ function renderSubmissions(){
   const box=document.getElementById('submissionList'); if(!box)return;
   box.innerHTML=state.submissions.length?state.submissions.map(s=>`<div class="admin-item"><div><strong>${esc(s.restaurant)} · ${esc(s.creator)}</strong><small>${esc(s.category)} · ${fmt(s.views)}회 · ${esc(s.status)}</small></div><div><button class="icon-btn" onclick="approveSubmission(${s.id})">승인</button><button class="icon-btn" onclick="removeSubmission(${s.id})">삭제</button></div></div>`).join(''):'<div class="empty">접수된 신청이 없습니다.</div>';
 }
-function approveSubmission(id){ const s=state.submissions.find(x=>x.id===id); if(!s)return; state.restaurants.unshift({id:Date.now(),name:s.restaurant,address:s.address,lat:37.5448,lng:127.0557,category:s.category,emoji:'🍽️',description:'크리에이터가 직접 등록한 맛집',hours:'',phone:'',views:s.views,reels:1,creators:1,badges:[],visible:true,featured:false,image:'',reelLinks:[{creator:s.creator,url:s.url,views:s.views}]}); s.status='승인'; saveState(); renderAll(); toast('맛집과 릴스를 승인했습니다. 좌표를 수정해주세요.'); }
+function approveSubmission(id){ const s=state.submissions.find(x=>x.id===id); if(!s)return; if(!isInstagramReel(s.url)||Number(s.views)<1000000){ toast('100만+ 원본 릴스 조건을 충족하지 않습니다.'); return; } state.restaurants.unshift({id:Date.now(),name:s.restaurant,address:s.address,lat:37.5448,lng:127.0557,category:s.category,emoji:'🍽️',description:'크리에이터가 직접 등록한 100만+ 릴스 맛집',hours:'',phone:'',views:s.views,reels:1,creators:1,badges:['million'],visible:true,featured:false,image:'',reelLinks:[{creator:s.creator,url:s.url,views:s.views}]}); s.status='승인'; saveState(); renderAll(); toast('100만+ 맛집으로 승인했습니다. 좌표를 수정해주세요.'); }
 function removeSubmission(id){ state.submissions=state.submissions.filter(x=>x.id!==id); saveState(); renderSubmissions(); }
 function renderReports(){ const box=document.getElementById('reportList'); if(!box)return; box.innerHTML=state.reports.length?state.reports.map(r=>`<div class="admin-item"><div><strong>${esc(r.restaurant)}</strong><small>${esc(r.reason)} · ${esc(r.status)}</small></div><div><button class="icon-btn" onclick="resolveReport(${r.id})">처리 완료</button></div></div>`).join(''):'<div class="empty">접수된 요청이 없습니다.</div>'; }
 function resolveReport(id){ const r=state.reports.find(x=>x.id===id); r.status='처리 완료'; saveState(); renderReports(); toast('처리 상태를 변경했습니다.'); }
