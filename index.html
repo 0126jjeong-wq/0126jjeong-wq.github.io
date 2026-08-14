@@ -1,13 +1,106 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>릴스맛집지도</title><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,sans-serif;color:#202124}header{padding:12px 16px;border-bottom:1px solid #eee;display:flex;gap:10px;align-items:center}b{font-weight:900}.logo{font-size:18px}.logo i{font-style:normal;background:#ff4d2e;color:#fff;padding:9px;border-radius:12px;margin-right:8px}input{flex:1;max-width:650px;margin-left:auto;padding:12px;border:1px solid #ddd;border-radius:13px;background:#f7f6f4}button{border:0;border-radius:11px;padding:11px 13px;font-weight:800}.dark{background:#202124;color:#fff}main{height:calc(100vh - 63px);display:grid;grid-template-columns:420px 1fr}.side{padding:18px;overflow:auto;border-right:1px solid #eee}.hero{padding:21px;border:1px solid #ffe0d7;border-radius:22px;background:linear-gradient(135deg,#fff1ec,#fff)}.hero small{color:#ff4d2e;font-weight:900}.hero h1{font-size:27px;line-height:1.2;margin:9px 0}.hero p,.muted{color:#777;font-size:12px}.livebar{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:14px}.live{background:#fff;border:1px solid #ffe0d7;border-radius:11px;padding:8px}.live b{display:block;font-size:16px}.live span{font-size:10px;color:#777}.filters{display:flex;gap:6px;overflow:auto;padding:14px 0}.chip{white-space:nowrap;border:1px solid #e5e5e5;background:#fff;border-radius:99px;padding:8px 10px;font-size:12px}.chip.on{background:#ff4d2e;color:#fff}.head{display:flex;justify-content:space-between;margin:6px 0 10px}.cards{display:grid;gap:9px}.card{border:1px solid #e8e8e8;border-radius:16px;padding:12px}.addr{font-size:11px;color:#777;margin:5px 0}.stats{font-size:11px;color:#777;display:flex;gap:9px}.badge{display:inline-block;background:#fff0eb;color:#ad3a26;border-radius:7px;padding:4px 6px;font-size:10px;margin:6px 4px 7px 0}.card a{font-size:11px;color:#ad3a26}.empty{border:1px dashed #ddd;border-radius:14px;padding:25px;text-align:center;color:#777;font-size:12px}#map{height:100%}.drawer{position:fixed;z-index:2000;right:0;top:0;height:100%;width:min(520px,100%);background:#fff;box-shadow:-15px 0 60px #0003;padding:17px;overflow:auto;transform:translateX(103%);transition:.2s}.drawer.show{transform:none}.dhead{display:flex;justify-content:space-between}.item{border:1px solid #eee;border-radius:13px;padding:10px;margin-top:8px}.item small{display:block;color:#777;margin-top:4px}.pin{width:32px;height:32px;background:#ff4d2e;border:3px solid white;border-radius:12px 12px 12px 4px;transform:rotate(-45deg);display:grid;place-items:center}.pin span{transform:rotate(45deg)}
-@media(max-width:850px){header{flex-wrap:wrap}input{order:3;width:100%;max-width:none}main{height:auto;grid-template-columns:1fr;grid-template-rows:auto 58vh}.side{border:0}.hero h1{font-size:24px}#map{min-height:58vh}}</style></head><body>
-<header><div class="logo"><i>🍜</i><b>릴스맛집지도</b></div><input id="q" placeholder="가게명, 주소 검색"><button class="dark" onclick="drawer.classList.add('show')">수집함</button></header>
-<main><section class="side"><div class="hero"><small>📍 서울 맛집 베타</small><h1>인스타에서 발견한 맛집을<br>지도에서 한눈에</h1><p>‘맛집지도 저장’으로 모은 릴스를 자동 분석해 실제 맛집 후보와 위치를 정리합니다.</p><div class="livebar"><div class="live"><b id="statTotal">-</b><span>전체 수집</span></div><div class="live"><b id="statReady">-</b><span>확인 완료</span></div><div class="live"><b id="statPending">-</b><span>확인 중</span></div><div class="live"><b id="statMap">-</b><span>지도 등록</span></div></div></div><div class="filters" id="filters"></div><div class="head"><b>릴스 맛집 <span id="count" class="muted"></span></b><span id="sync" class="muted">불러오는 중…</span></div><div id="cards" class="cards"></div></section><section id="map"></section></main>
-<aside id="drawer" class="drawer"><div class="dhead"><div><b>📥 자동 수집함</b><div class="muted">인스타 → Apify → Supabase</div></div><button onclick="drawer.classList.remove('show')">✕</button></div><div id="inbox"></div></aside>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>
-const API="https://tbyfoxsyadmpeeatyzvm.supabase.co/functions/v1/site-data";let rs=[],ib=[],active="전체";const cats=["전체","식사","일식","양식","카페·디저트","술집"],map=L.map("map").setView([37.5665,126.978],11),layer=L.layerGroup().addTo(map);L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
-const E=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),F=n=>Number(n||0).toLocaleString();function icon(){return L.divIcon({className:"",html:'<div class="pin"><span>🍽️</span></div>',iconSize:[32,32],iconAnchor:[16,30]})}
-function render(){filters.innerHTML=cats.map(c=>`<button class="chip ${c===active?"on":""}" onclick="active='${c}';render()">${c}</button>`).join("");let t=q.value.toLowerCase(),a=rs.filter(x=>(active==="전체"||x.category===active||(!x.category&&active==="식사"))&&(!t||[x.name,x.address,x.region].join(" ").toLowerCase().includes(t)));count.textContent=a.length+"곳";cards.innerHTML=a.length?a.map(x=>`<div class="card"><b>${E(x.name)}</b><div class="addr">📍 ${E(x.address||"주소 확인중")}</div><span class="badge">${E(x.category||"식사")}</span><span class="badge">${E(x.region||"서울")}</span><div class="stats"><span>▶ ${F(x.view_count)}</span><span>♥ ${F(x.like_count)}</span><span>💬 ${F(x.comment_count)}</span></div>${x.instagram_url?`<a target="_blank" href="${E(x.instagram_url)}">원본 인스타 ↗</a>`:""}</div>`).join(""):'<div class="empty">아직 지도에 표시할 검증된 맛집이 없습니다.</div>';layer.clearLayers();a.forEach(x=>{let a=+x.latitude,b=+x.longitude;if(Number.isFinite(a)&&Number.isFinite(b))L.marker([a,b],{icon:icon()}).addTo(layer).bindPopup(`<b>${E(x.name)}</b><br>${E(x.address||"")}`)})}
-function inboxRender(){inbox.innerHTML=ib.map(x=>`<div class="item"><b>${E(x.restaurant_name||"가게명 확인중")}</b><small>${E(x.address||"주소 확인중")}<br>▶ ${F(x.view_count)} · ♥ ${F(x.like_count)} · 💬 ${F(x.comment_count)}<br>${E(x.analysis_status||x.status)}</small></div>`).join("")||'<div class="empty">수집 데이터 없음</div>'}
-async function load(){try{let r=await fetch(API+"?t="+Date.now()),j=await r.json();if(!j.ok)throw 0;rs=j.restaurants||[];ib=j.inbox||[];const s=j.stats||{};statTotal.textContent=s.total_inbox??ib.length;statReady.textContent=s.ready??0;statPending.textContent=s.pending??0;statMap.textContent=s.restaurants??rs.length;sync.textContent="Supabase 실시간 연동";render();inboxRender()}catch(e){sync.textContent="연동 오류"}}q.addEventListener("input",render);render();load();setInterval(load,60000);
-</script></body></html>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ff4d2e">
+  <meta name="description" content="인스타 릴스에서 발견한 서울 맛집을 영상으로 확인하고 지도에서 바로 찾아보세요.">
+  <meta property="og:title" content="릴스맛집지도">
+  <meta property="og:description" content="릴스로 먼저 보고, 지도에서 바로 찾는 서울 맛집 큐레이션">
+  <title>릴스맛집지도 | 서울 맛집을 릴스와 지도로</title>
+  <link rel="preconnect" href="https://unpkg.com">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    :root{--brand:#ff4d2e;--brand-dark:#d9361e;--ink:#17181b;--muted:#73757b;--line:#e8e6e3;--canvas:#f7f6f3;--soft:#fff0eb;--shadow:0 14px 40px #1d1d1d12}
+    *{box-sizing:border-box}html,body{margin:0;height:100%;color:var(--ink);background:var(--canvas);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Segoe UI",sans-serif}button,input{font:inherit}button{cursor:pointer}a{color:inherit}.hidden{display:none!important}
+    .topbar{height:68px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 22px;position:relative;z-index:1001}
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;white-space:nowrap}.brand-mark{width:42px;height:42px;display:grid;place-items:center;background:var(--brand);border-radius:14px;font-size:23px;box-shadow:0 7px 18px #ff4d2e35}.brand-name{font-size:19px;font-weight:950;letter-spacing:-.7px}
+    .search{margin-left:auto;width:min(520px,48vw);position:relative}.search span{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px}.search input{width:100%;height:44px;border:1px solid #deddd9;border-radius:14px;background:#f8f8f7;padding:0 15px 0 40px;outline:none}.search input:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px #ff4d2e16}
+    .top-count{font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap}.top-count b{color:var(--brand)}
+    .layout{height:calc(100% - 68px);display:grid;grid-template-columns:470px 1fr}.feed{overflow:auto;padding:22px;border-right:1px solid var(--line);background:var(--canvas);scrollbar-width:thin}.map-wrap{position:relative;min-width:0}#map{height:100%;width:100%;background:#ddd}
+    .intro{background:linear-gradient(135deg,#fff1ec 0%,#fff 72%);border:1px solid #ffd9cf;border-radius:24px;padding:22px;position:relative;overflow:hidden}.intro:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;background:#ff4d2e0b;right:-55px;top:-60px}.eyebrow{color:var(--brand);font-size:12px;font-weight:950}.intro h1{font-size:27px;letter-spacing:-1.4px;line-height:1.18;margin:9px 0}.intro p{font-size:13px;color:var(--muted);line-height:1.55;margin:0}.intro-meta{display:flex;align-items:center;gap:8px;margin-top:15px;font-size:11px;font-weight:800}.intro-meta span{background:#fff;border:1px solid #ffded5;border-radius:99px;padding:7px 9px}
+    .filters{display:flex;gap:7px;overflow:auto;padding:17px 1px 12px;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}.chip{border:1px solid #deddd9;background:#fff;color:#4d4f54;border-radius:99px;padding:9px 12px;font-size:12px;font-weight:850;white-space:nowrap}.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+    .section-head{display:flex;align-items:end;gap:8px;margin:5px 0 11px}.section-head h2{font-size:18px;margin:0;letter-spacing:-.5px}.section-head span{font-size:12px;color:var(--muted)}.sort-label{margin-left:auto;color:var(--muted);font-size:11px;font-weight:750}
+    .cards{display:grid;gap:11px;padding-bottom:20px}.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:14px;box-shadow:0 3px 14px #11111108;transition:.18s;cursor:pointer}.card:hover,.card.active{border-color:#ffb7a6;box-shadow:var(--shadow);transform:translateY(-1px)}
+    .card-top{display:grid;grid-template-columns:70px 1fr;gap:13px}.visual{height:70px;border-radius:17px;display:grid;place-items:center;position:relative;background:linear-gradient(145deg,#ffe6de,#fff6ef);font-size:29px}.rank{position:absolute;left:7px;top:6px;background:#fff;color:var(--brand);border-radius:7px;padding:3px 5px;font-size:9px;font-weight:950;box-shadow:0 2px 8px #0001}
+    .card h3{font-size:17px;margin:3px 0 5px;letter-spacing:-.5px}.address{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tags{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}.tag{background:#f3f2f0;border-radius:7px;padding:5px 7px;font-size:10px;font-weight:800}.tag.accent{background:var(--soft);color:var(--brand-dark)}
+    .card-foot{display:flex;align-items:center;gap:10px;border-top:1px solid #f0efed;margin-top:12px;padding-top:11px}.stats{display:flex;gap:9px;color:#777a80;font-size:10px}.card-actions{margin-left:auto;display:flex;gap:5px}.icon-btn,.reel-btn{border:1px solid var(--line);background:#fff;border-radius:10px;height:34px;font-weight:850}.icon-btn{width:35px;font-size:14px}.icon-btn.saved{background:var(--soft);border-color:#ffd1c5;color:var(--brand)}.reel-btn{display:flex;align-items:center;padding:0 10px;text-decoration:none;color:var(--brand-dark);font-size:10px}.reel-btn:hover{background:var(--soft)}
+    .empty{background:#fff;border:1px dashed #d7d5d1;border-radius:20px;padding:38px 20px;text-align:center;color:var(--muted);font-size:13px}.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:7px}
+    .map-card{position:absolute;left:16px;top:16px;z-index:500;background:#fff;border:1px solid var(--line);border-radius:15px;padding:11px 13px;box-shadow:var(--shadow);font-size:11px}.map-card b{display:block;font-size:13px;margin-bottom:2px}.map-card span{color:var(--muted)}
+    .pin{width:36px;height:36px;background:var(--brand);border:3px solid #fff;border-radius:13px 13px 13px 4px;box-shadow:0 5px 14px #0003;transform:rotate(-45deg);display:grid;place-items:center}.pin span{transform:rotate(45deg);font-size:16px}.leaflet-popup-content-wrapper{border-radius:15px;box-shadow:0 15px 45px #0003}.popup{min-width:175px}.popup b{font-size:14px}.popup p{font-size:10px;color:#777;margin:5px 0 9px}.popup a{display:inline-block;background:var(--brand);color:#fff;text-decoration:none;border-radius:8px;padding:7px 9px;font-size:10px;font-weight:800}
+    .bottom-nav{display:none}.toast{position:fixed;z-index:3000;left:50%;bottom:25px;transform:translate(-50%,20px);background:#1f2023;color:#fff;border-radius:12px;padding:11px 15px;font-size:12px;font-weight:750;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
+    @media(max-width:760px){
+      body{padding-bottom:calc(68px + env(safe-area-inset-bottom))}.topbar{height:auto;min-height:62px;padding:10px 14px;flex-wrap:wrap;gap:8px}.brand-mark{width:38px;height:38px;border-radius:12px;font-size:20px}.brand-name{font-size:18px}.top-count{margin-left:auto}.search{order:3;width:100%;margin:0}.search input{height:42px}
+      .layout{height:calc(100% - 112px);display:block}.feed{height:100%;padding:14px;border:0}.map-wrap{height:100%;display:none}.intro{padding:17px;border-radius:20px}.intro h1{font-size:22px}.intro p{font-size:12px}.intro-meta{margin-top:12px}.filters{padding:13px 0 10px;position:sticky;top:-14px;background:linear-gradient(var(--canvas) 76%,transparent);z-index:5}.section-head{margin-top:2px}.cards{padding-bottom:30px}
+      .card{border-radius:18px}.card:hover{transform:none}.card-top{grid-template-columns:62px 1fr}.visual{height:62px;border-radius:15px}.card h3{font-size:16px}
+      body[data-view="map"] .feed{display:none}body[data-view="map"] .map-wrap{display:block}body[data-view="saved"] .intro{display:none}
+      .bottom-nav{position:fixed;display:grid;grid-template-columns:repeat(3,1fr);left:0;right:0;bottom:0;height:calc(64px + env(safe-area-inset-bottom));padding:5px 18px env(safe-area-inset-bottom);background:#fff;border-top:1px solid var(--line);z-index:2000}.nav-btn{border:0;background:none;color:#87898e;font-size:10px;font-weight:850;display:grid;place-items:center;gap:1px}.nav-btn i{font-style:normal;font-size:20px}.nav-btn.on{color:var(--brand)}
+      .map-card{top:12px;left:12px}.toast{bottom:82px;width:max-content;max-width:calc(100% - 30px);text-align:center}
+    }
+  </style>
+</head>
+<body data-view="list">
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="릴스맛집지도 홈"><span class="brand-mark">🍜</span><span class="brand-name">릴스맛집지도</span></a>
+    <div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="가게명, 동네, 음식으로 검색" aria-label="맛집 검색"></div>
+    <div class="top-count">서울 맛집 <b id="topCount">0</b>곳</div>
+  </header>
+  <main class="layout">
+    <section class="feed" id="feed">
+      <div class="intro">
+        <div class="eyebrow">REELS FOOD MAP · SEOUL</div>
+        <h1>릴스로 먼저 보고,<br>지도에서 바로 찾기</h1>
+        <p>과장된 사진 대신 실제 릴스 반응과 위치를 한곳에서 확인하세요.</p>
+        <div class="intro-meta"><span>✓ 위치 확인</span><span>✓ 원본 릴스</span><span>✓ 서울 전역</span></div>
+      </div>
+      <div class="filters" id="filters"></div>
+      <div class="section-head"><h2 id="sectionTitle">요즘 뜨는 맛집</h2><span id="resultCount">0곳</span><div class="sort-label">릴스 조회수순</div></div>
+      <div class="cards" id="cards"></div>
+    </section>
+    <section class="map-wrap" id="mapWrap">
+      <div class="map-card"><b>서울 릴스 맛집</b><span id="mapCount">지도에 0곳 표시 중</span></div>
+      <div id="map" aria-label="맛집 지도"></div>
+    </section>
+  </main>
+  <nav class="bottom-nav" aria-label="화면 전환">
+    <button class="nav-btn on" data-view="list"><i>☷</i><span>맛집</span></button>
+    <button class="nav-btn" data-view="map"><i>⌖</i><span>지도</span></button>
+    <button class="nav-btn" data-view="saved"><i>♡</i><span>저장</span></button>
+  </nav>
+  <div id="toast" class="toast"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const API="https://tbyfoxsyadmpeeatyzvm.supabase.co/functions/v1/site-data";
+    const categories=["전체","식사","일식","양식","카페·디저트","술집"];
+    const categoryEmoji={"식사":"🍽️","일식":"🍣","양식":"🍝","카페·디저트":"☕","술집":"🍷"};
+    let restaurants=[],filtered=[],activeCategory="전체",activeView="list",activeId=null;
+    const saved=new Set(JSON.parse(localStorage.getItem("reelsmap_saved")||"[]"));
+    const map=L.map("map",{zoomControl:true}).setView([37.5665,126.978],11),markers=L.layerGroup().addTo(map),markerById=new Map();
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
+    const $=id=>document.getElementById(id),esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    const fmt=n=>{const x=Number(n||0);return x>=10000?(x/10000).toFixed(x>=100000?0:1)+"만":x.toLocaleString()},emoji=x=>categoryEmoji[x.category]||"🍜";
+    function toast(message){$("toast").textContent=message;$("toast").classList.add("show");clearTimeout(toast.timer);toast.timer=setTimeout(()=>$("toast").classList.remove("show"),1800)}
+    function markerIcon(x){return L.divIcon({className:"",html:`<div class="pin"><span>${emoji(x)}</span></div>`,iconSize:[36,36],iconAnchor:[18,33]})}
+    function applyFilters(){
+      const q=$("searchInput").value.trim().toLowerCase();
+      filtered=restaurants.filter(x=>(activeCategory==="전체"||x.category===activeCategory||(!x.category&&activeCategory==="식사"))&&(!q||[x.name,x.address,x.region,x.category,x.creator_handle].join(" ").toLowerCase().includes(q))&&(activeView!=="saved"||saved.has(x.id))).sort((a,b)=>Number(b.view_count||0)-Number(a.view_count||0));render();
+    }
+    function render(){
+      $("topCount").textContent=restaurants.length;$("resultCount").textContent=filtered.length+"곳";$("mapCount").textContent="지도에 "+filtered.length+"곳 표시 중";$("sectionTitle").textContent=activeView==="saved"?"내가 저장한 맛집":activeCategory==="전체"?"요즘 뜨는 맛집":activeCategory+" 맛집";
+      $("filters").innerHTML=categories.map(c=>`<button class="chip ${c===activeCategory?"on":""}" data-category="${c}">${c}</button>`).join("");
+      $("cards").innerHTML=filtered.length?filtered.map((x,i)=>`<article class="card ${activeId===x.id?"active":""}" data-id="${x.id}" tabindex="0"><div class="card-top"><div class="visual"><span class="rank">#${i+1}</span>${emoji(x)}</div><div><h3>${esc(x.name)}</h3><div class="address">📍 ${esc(x.address||"서울")}</div><div class="tags"><span class="tag accent">${esc(x.category||"식사")}</span><span class="tag">${esc(x.region||"서울")}</span></div></div></div><div class="card-foot"><div class="stats"><span>▶ ${fmt(x.view_count)}</span><span>♥ ${fmt(x.like_count)}</span><span>💬 ${fmt(x.comment_count)}</span></div><div class="card-actions"><button class="icon-btn ${saved.has(x.id)?"saved":""}" data-save="${x.id}" aria-label="저장">${saved.has(x.id)?"♥":"♡"}</button><button class="icon-btn" data-share="${x.id}" aria-label="공유">↗</button>${x.instagram_url?`<a class="reel-btn" href="${esc(x.instagram_url)}" target="_blank" rel="noopener">릴스 보기</a>`:""}</div></div></article>`).join(""):`<div class="empty"><b>${activeView==="saved"?"아직 저장한 맛집이 없어요":"검색 결과가 없어요"}</b>${activeView==="saved"?"마음에 드는 맛집의 ♡를 눌러보세요.":"다른 지역이나 카테고리로 검색해보세요."}</div>`;renderMarkers();
+    }
+    function renderMarkers(){markers.clearLayers();markerById.clear();const bounds=[];filtered.forEach(x=>{const lat=Number(x.latitude),lng=Number(x.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;const m=L.marker([lat,lng],{icon:markerIcon(x)}).addTo(markers).bindPopup(`<div class="popup"><b>${esc(x.name)}</b><p>${esc(x.address||"")}</p>${x.instagram_url?`<a href="${esc(x.instagram_url)}" target="_blank" rel="noopener">원본 릴스 보기</a>`:""}</div>`);m.on("click",()=>selectRestaurant(x.id,false));markerById.set(x.id,m);bounds.push([lat,lng])});if(bounds.length>1)map.fitBounds(bounds,{padding:[55,55],maxZoom:14});else if(bounds.length===1)map.setView(bounds[0],14)}
+    function selectRestaurant(id,openMap=true){activeId=id;document.querySelectorAll(".card").forEach(c=>c.classList.toggle("active",c.dataset.id===id));if(openMap&&window.innerWidth<=760)setView("map");const m=markerById.get(id);if(m){map.setView(m.getLatLng(),15,{animate:true});m.openPopup()}}
+    function toggleSave(id){saved.has(id)?saved.delete(id):saved.add(id);localStorage.setItem("reelsmap_saved",JSON.stringify([...saved]));toast(saved.has(id)?"맛집을 저장했어요":"저장을 취소했어요");applyFilters()}
+    async function shareRestaurant(id){const x=restaurants.find(r=>r.id===id);if(!x)return;const data={title:x.name,text:`${x.name} · ${x.address||"서울 맛집"}`,url:location.href};try{if(navigator.share)await navigator.share(data);else{await navigator.clipboard.writeText(location.href);toast("링크를 복사했어요")}}catch{}}
+    function setView(view){activeView=view;document.body.dataset.view=view;document.querySelectorAll(".nav-btn").forEach(x=>x.classList.toggle("on",x.dataset.view===view));if(view==="map")setTimeout(()=>map.invalidateSize(),80);applyFilters()}
+    $("filters").addEventListener("click",e=>{const b=e.target.closest("[data-category]");if(!b)return;activeCategory=b.dataset.category;applyFilters()});
+    $("cards").addEventListener("click",e=>{const save=e.target.closest("[data-save]"),share=e.target.closest("[data-share]");if(save){e.stopPropagation();toggleSave(save.dataset.save);return}if(share){e.stopPropagation();shareRestaurant(share.dataset.share);return}if(e.target.closest("a"))return;const card=e.target.closest("[data-id]");if(card)selectRestaurant(card.dataset.id)});
+    $("cards").addEventListener("keydown",e=>{if(e.key==="Enter"){const card=e.target.closest("[data-id]");if(card)selectRestaurant(card.dataset.id)}});
+    $("searchInput").addEventListener("input",applyFilters);document.querySelectorAll(".nav-btn").forEach(x=>x.addEventListener("click",()=>setView(x.dataset.view)));
+    async function load(){try{const r=await fetch(API+"?t="+Date.now()),j=await r.json();if(!j.ok)throw new Error();restaurants=j.restaurants||[];applyFilters()}catch{$("cards").innerHTML='<div class="empty"><b>맛집을 불러오지 못했어요</b>잠시 후 다시 시도해주세요.</div>'}}
+    window.addEventListener("resize",()=>map.invalidateSize());applyFilters();load();
+  </script>
+</body>
+</html>
