@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>릴스맛집지도 관리자</title>
+  <style>
+    :root{--ink:#202124;--muted:#747474;--line:#e8e8e8;--brand:#ff4d2e;--soft:#fff1ec;--ok:#16834b;--danger:#b62d24}
+    *{box-sizing:border-box}body{margin:0;background:#f6f5f3;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+    .login{min-height:100vh;display:grid;place-items:center;padding:20px}.login-card{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;padding:28px;box-shadow:0 20px 70px #0001}
+    .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:19px}.brand i{font-style:normal;background:var(--brand);padding:9px;border-radius:12px}
+    h1{font-size:27px;margin:24px 0 8px}p{color:var(--muted);font-size:13px;line-height:1.55}.field{display:grid;gap:6px;margin:13px 0}.field label{font-size:12px;font-weight:800}
+    input,select,textarea{width:100%;border:1px solid #d9d9d9;background:#fff;border-radius:11px;padding:11px 12px;outline:none}input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px #ff4d2e18}
+    textarea{min-height:100px;resize:vertical}.btn{border:0;border-radius:11px;padding:11px 14px;font-weight:850}.primary{background:var(--brand);color:#fff}.dark{background:var(--ink);color:#fff}.ghost{background:#fff;border:1px solid var(--line)}.danger{color:var(--danger);background:#fff0ee}.wide{width:100%}.message{min-height:20px;margin-top:10px;color:var(--danger);font-size:12px}
+    header{height:64px;background:#fff;border-bottom:1px solid var(--line);padding:0 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}.spacer{flex:1}.user{font-size:11px;color:var(--muted)}
+    main{max-width:1280px;margin:auto;padding:22px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.metric,.panel{background:#fff;border:1px solid var(--line);border-radius:17px}.metric{padding:15px}.metric b{font-size:24px;display:block}.metric span{font-size:11px;color:var(--muted)}
+    .tabs{display:flex;gap:7px;margin:18px 0 12px;overflow:auto}.tab{border:1px solid var(--line);background:#fff;border-radius:99px;padding:9px 13px;font-weight:800;white-space:nowrap}.tab.on{background:var(--ink);color:#fff}
+    .panel{overflow:hidden}.panel-head{display:flex;align-items:center;gap:10px;padding:15px;border-bottom:1px solid var(--line)}.panel-head input{max-width:380px;margin-left:auto}.list{display:grid}
+    .row{display:grid;grid-template-columns:minmax(180px,1.2fr) minmax(220px,1.5fr) 150px 220px;gap:14px;align-items:center;padding:14px 15px;border-bottom:1px solid #f0f0f0}.row:last-child{border:0}.name{font-weight:900}.sub{font-size:11px;color:var(--muted);margin-top:4px;word-break:break-all}.pill{display:inline-block;font-size:10px;border-radius:99px;padding:5px 8px;background:#f1f1f1;margin:2px}.pill.ok{background:#e8f7ef;color:var(--ok)}.pill.warn{background:#fff2df;color:#9b5c00}.actions{display:flex;justify-content:flex-end;gap:6px;flex-wrap:wrap}.actions .btn{font-size:11px;padding:8px 9px}.empty{padding:40px;text-align:center;color:var(--muted);font-size:13px}
+    .import{padding:18px}.import textarea{min-height:320px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}.hint{background:var(--soft);border:1px solid #ffd9ce;border-radius:13px;padding:12px;margin-bottom:14px;font-size:12px;line-height:1.6}
+    dialog{border:0;border-radius:22px;padding:0;width:min(760px,calc(100% - 24px));box-shadow:0 30px 100px #0005}dialog::backdrop{background:#0007}.modal-head{padding:17px 19px;border-bottom:1px solid var(--line);display:flex;align-items:center}.modal-body{padding:18px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.full{grid-column:1/-1}.modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:15px 19px;border-top:1px solid var(--line)}
+    @media(max-width:850px){.summary{grid-template-columns:1fr 1fr}.row{grid-template-columns:1fr}.actions{justify-content:flex-start}.panel-head{align-items:stretch;flex-direction:column}.panel-head input{max-width:none;margin:0}.grid{grid-template-columns:1fr}.full{grid-column:auto}.user{display:none}}
+  </style>
+</head>
+<body>
+  <section id="loginView" class="login">
+    <form id="loginForm" class="login-card">
+      <div class="brand"><i>🍜</i> 릴스맛집지도</div>
+      <h1>관리자 로그인</h1>
+      <p>Supabase Auth로 인증된 관리자만 수집함과 지도 데이터를 수정할 수 있습니다.</p>
+      <div class="field"><label for="email">이메일</label><input id="email" type="email" autocomplete="username" required></div>
+      <div class="field"><label for="password">비밀번호</label><input id="password" type="password" minlength="8" autocomplete="current-password" required></div>
+      <button id="loginBtn" class="btn primary wide" type="submit">로그인</button>
+      <button id="signupBtn" class="btn ghost wide" type="button" style="margin-top:8px">최초 관리자 계정 만들기</button>
+      <div id="loginMessage" class="message"></div>
+    </form>
+  </section>
+
+  <section id="appView" class="hidden">
+    <header>
+      <div class="brand"><i>🍜</i> 관리자</div><span class="pill ok">Supabase 운영 DB</span><div class="spacer"></div>
+      <span id="userEmail" class="user"></span><a class="btn ghost" href="./index.html" target="_blank">지도 보기</a><button id="logoutBtn" class="btn dark">로그아웃</button>
+    </header>
+    <main>
+      <section class="summary">
+        <div class="metric"><b id="mInbox">0</b><span>전체 수집</span></div><div class="metric"><b id="mReview">0</b><span>검토 필요</span></div>
+        <div class="metric"><b id="mPublished">0</b><span>지도 공개</span></div><div class="metric"><b id="mExcluded">0</b><span>등록 제외</span></div>
+      </section>
+      <nav class="tabs">
+        <button class="tab on" data-tab="inbox">자동 수집함</button><button class="tab" data-tab="restaurants">맛집 관리</button><button class="tab" data-tab="import">AI JSON 가져오기</button>
+      </nav>
+      <section id="inboxPanel" class="panel">
+        <div class="panel-head"><b>Instagram → Apify → Supabase</b><input id="inboxSearch" placeholder="가게명, 주소, 계정 검색"></div><div id="inboxList" class="list"></div>
+      </section>
+      <section id="restaurantsPanel" class="panel hidden">
+        <div class="panel-head"><b>서울 전체 지도 데이터</b><button id="newRestaurantBtn" class="btn primary">맛집 직접 추가</button><input id="restaurantSearch" placeholder="가게명, 주소, 지역 검색"></div><div id="restaurantList" class="list"></div>
+      </section>
+      <section id="importPanel" class="panel hidden">
+        <div class="import">
+          <div class="hint"><b>AI 분석 JSON을 검토함으로 가져옵니다.</b><br>가져온 항목은 바로 지도에 공개되지 않고 자동 수집함의 검토 대상으로 저장됩니다. 실제 업체명·주소·좌표를 확인한 후에만 공개하세요.</div>
+          <textarea id="jsonInput" spellcheck="false" placeholder='[{"instagram_url":"https://www.instagram.com/reel/.../","name":"가게명","address":"서울 ...","lat":37.5,"lng":127.0,"category":"일식","region":"성수·서울숲"}]'></textarea>
+          <button id="importBtn" class="btn primary" style="margin-top:10px">검토함으로 가져오기</button><span id="importMessage" class="message"></span>
+        </div>
+      </section>
+    </main>
+  </section>
+
+  <dialog id="editor">
+    <form id="editorForm">
+      <div class="modal-head"><b id="editorTitle">맛집 검토·공개</b><div class="spacer"></div><button class="btn ghost" type="button" data-close>✕</button></div>
+      <div class="modal-body grid">
+        <input id="fId" type="hidden"><input id="fInboxId" type="hidden">
+        <div class="field"><label>가게명 *</label><input id="fName" required></div>
+        <div class="field"><label>카테고리 *</label><select id="fCategory"><option>식사</option><option>일식</option><option>양식</option><option>카페·디저트</option><option>술집</option></select></div>
+        <div class="field full"><label>주소 *</label><input id="fAddress" required></div>
+        <div class="field"><label>서울 지역</label><input id="fRegion" placeholder="예: 성수·서울숲"></div>
+        <div class="field"><label>작성자</label><input id="fCreator"></div>
+        <div class="field"><label>위도 *</label><input id="fLat" type="number" step="any" required></div>
+        <div class="field"><label>경도 *</label><input id="fLng" type="number" step="any" required></div>
+        <div class="field full"><label>Instagram URL *</label><input id="fUrl" type="url" required></div>
+        <div class="field"><label>조회수</label><input id="fViews" type="number" min="0"></div>
+        <div class="field"><label>좋아요</label><input id="fLikes" type="number" min="0"></div>
+        <div class="field"><label>댓글</label><input id="fComments" type="number" min="0"></div>
+        <div class="field full"><label>관리자 메모</label><textarea id="fNote"></textarea></div>
+        <div id="editorMessage" class="message full"></div>
+      </div>
+      <div class="modal-foot"><button class="btn ghost" type="button" data-close>취소</button><button id="publishBtn" class="btn primary" type="submit">검증 완료 · 지도 공개</button></div>
+    </form>
+  </dialog>
+
+  <script type="module">
+    import{createClient}from"https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.0/+esm";
+    const PROJECT_URL="https://tbyfoxsyadmpeeatyzvm.supabase.co";
+    const PUBLISHABLE_KEY="sb_publishable_988pI6RSLYvNDIUEZ1sc3w_ZLlwcRh_";
+    const ADMIN_API=PROJECT_URL+"/functions/v1/admin-data";
+    const sb=createClient(PROJECT_URL,PUBLISHABLE_KEY);
+    let inbox=[],restaurants=[],session=null,activeTab="inbox";
+    const $=id=>document.getElementById(id),esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    const fmt=n=>Number(n||0).toLocaleString(),statusLabel=s=>({pending:"대기",processing:"분석 중",source_fetched:"수집 완료",needs_place_lookup:"장소 확인 필요",needs_review:"검토 필요",published:"공개",registered:"등록",ignored:"제외",not_found:"미확인",error:"오류"}[s]||s||"대기");
+
+    async function api(method="GET",body){
+      if(!session)throw new Error("로그인이 필요합니다.");
+      const r=await fetch(ADMIN_API,{method,headers:{Authorization:"Bearer "+session.access_token,apikey:PUBLISHABLE_KEY,"content-type":"application/json"},body:body?JSON.stringify(body):undefined});
+      const j=await r.json().catch(()=>({ok:false,error:"서버 응답을 읽지 못했습니다."}));if(!r.ok||!j.ok)throw new Error(j.error||"요청 실패");return j;
+    }
+    async function load(){
+      const j=await api();inbox=j.inbox||[];restaurants=j.restaurants||[];$("userEmail").textContent=j.user?.email||session.user.email;render();
+    }
+    function render(){
+      $("mInbox").textContent=inbox.length;$("mReview").textContent=inbox.filter(x=>!["registered","ignored"].includes(x.status)).length;
+      $("mPublished").textContent=restaurants.filter(x=>x.status==="published").length;$("mExcluded").textContent=inbox.filter(x=>x.status==="ignored"||x.analysis_status==="not_found").length;
+      renderInbox();renderRestaurants();
+    }
+    function renderInbox(){
+      const q=$("inboxSearch").value.toLowerCase(),rows=inbox.filter(x=>[x.restaurant_name,x.address,x.creator_handle,x.source_url].join(" ").toLowerCase().includes(q));
+      $("inboxList").innerHTML=rows.length?rows.map(x=>`<article class="row"><div><div class="name">${esc(x.restaurant_name||"가게명 확인 필요")}</div><div class="sub">@${esc(x.creator_handle||"-")} · ${new Date(x.created_at).toLocaleString("ko-KR")}</div></div><div><div>${esc(x.address||"주소 확인 필요")}</div><div class="sub">${esc(x.source_fetch_note||x.analysis_error||"")}</div></div><div><span class="pill ${x.analysis_status==="error"?"":"warn"}">${esc(statusLabel(x.analysis_status||x.status))}</span><div class="sub">▶ ${fmt(x.view_count)} · ♥ ${fmt(x.like_count)}</div></div><div class="actions"><a class="btn ghost" target="_blank" rel="noopener" href="${esc(x.source_url)}">원본</a><button class="btn primary" data-edit-inbox="${x.id}">검토·공개</button><button class="btn danger" data-ignore="${x.id}">제외</button></div></article>`).join(""):'<div class="empty">수집 데이터가 없습니다.</div>';
+    }
+    function renderRestaurants(){
+      const q=$("restaurantSearch").value.toLowerCase(),rows=restaurants.filter(x=>[x.name,x.address,x.region,x.category].join(" ").toLowerCase().includes(q));
+      $("restaurantList").innerHTML=rows.length?rows.map(x=>`<article class="row"><div><div class="name">${esc(x.name)}</div><div class="sub">${esc(x.category||"식사")} · ${esc(x.region||"서울")}</div></div><div><div>${esc(x.address||"-")}</div><div class="sub">${x.latitude??"-"}, ${x.longitude??"-"}</div></div><div><span class="pill ${x.status==="published"?"ok":"warn"}">${esc(statusLabel(x.status))}</span><div class="sub">▶ ${fmt(x.view_count)}</div></div><div class="actions"><button class="btn ghost" data-edit-restaurant="${x.id}">수정</button>${x.status==="published"?`<button class="btn ghost" data-unpublish="${x.id}">공개 중지</button>`:""}<button class="btn danger" data-delete="${x.id}">삭제</button></div></article>`).join(""):'<div class="empty">등록된 맛집이 없습니다.</div>';
+    }
+    function showTab(tab){
+      activeTab=tab;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.dataset.tab===tab));
+      ["inbox","restaurants","import"].forEach(x=>$(x+"Panel").classList.toggle("hidden",x!==tab));
+    }
+    function openEditor(x={},fromInbox=false){
+      $("editorForm").reset();$("fId").value=fromInbox?"":x.id||"";$("fInboxId").value=fromInbox?x.id:(x.inbox_id||"");
+      $("fName").value=fromInbox?x.restaurant_name||"":x.name||"";$("fAddress").value=x.address||"";
+      $("fCategory").value=(fromInbox?x.analysis?.category:x.category)||"식사";$("fRegion").value=(fromInbox?x.analysis?.region:x.region)||"서울";
+      $("fLat").value=x.latitude??"";$("fLng").value=x.longitude??"";$("fUrl").value=fromInbox?x.source_url||"":x.instagram_url||"";
+      $("fCreator").value=x.creator_handle||"";$("fViews").value=x.view_count??"";$("fLikes").value=x.like_count??"";$("fComments").value=x.comment_count??"";
+      $("fNote").value=x.editor_note||"";$("editorMessage").textContent="";$("editor").showModal();
+    }
+    async function publish(e){
+      e.preventDefault();$("publishBtn").disabled=true;$("editorMessage").textContent="";
+      try{await api("POST",{action:"publish",restaurant:{id:$("fId").value||null,inbox_id:$("fInboxId").value||null,name:$("fName").value,address:$("fAddress").value,category:$("fCategory").value,region:$("fRegion").value,latitude:$("fLat").value,longitude:$("fLng").value,instagram_url:$("fUrl").value,creator_handle:$("fCreator").value,view_count:$("fViews").value,like_count:$("fLikes").value,comment_count:$("fComments").value,editor_note:$("fNote").value}});$("editor").close();await load();showTab("restaurants")}catch(err){$("editorMessage").textContent=err.message}finally{$("publishBtn").disabled=false}
+    }
+    async function action(payload,confirmText){
+      if(confirmText&&!confirm(confirmText))return;try{await api("POST",payload);await load()}catch(err){alert(err.message)}
+    }
+    $("loginForm").addEventListener("submit",async e=>{e.preventDefault();$("loginMessage").textContent="";const {data,error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)return $("loginMessage").textContent=error.message;session=data.session;await enter()});
+    $("signupBtn").addEventListener("click",async()=>{const email=$("email").value.trim(),password=$("password").value;if(!email||password.length<8)return $("loginMessage").textContent="이메일과 8자 이상 비밀번호를 입력해주세요.";const {data,error}=await sb.auth.signUp({email,password});$("loginMessage").textContent=error?error.message:(data.session?"계정 생성 완료":"확인 메일을 누른 후 로그인해주세요.");if(data.session){session=data.session;await enter()}});
+    async function enter(){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");try{await load()}catch(err){alert(err.message);await sb.auth.signOut();location.reload()}}
+    $("logoutBtn").addEventListener("click",async()=>{await sb.auth.signOut();location.reload()});$("editorForm").addEventListener("submit",publish);
+    document.querySelectorAll("[data-close]").forEach(x=>x.addEventListener("click",()=>$("editor").close()));document.querySelectorAll(".tab").forEach(x=>x.addEventListener("click",()=>showTab(x.dataset.tab)));
+    $("inboxSearch").addEventListener("input",renderInbox);$("restaurantSearch").addEventListener("input",renderRestaurants);$("newRestaurantBtn").addEventListener("click",()=>openEditor());
+    $("inboxList").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.editInbox)openEditor(inbox.find(x=>x.id===b.dataset.editInbox),true);if(b.dataset.ignore)action({action:"ignore_inbox",id:b.dataset.ignore},"이 항목을 지도 등록에서 제외할까요?")});
+    $("restaurantList").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.editRestaurant)openEditor(restaurants.find(x=>x.id===b.dataset.editRestaurant));if(b.dataset.unpublish)action({action:"unpublish",id:b.dataset.unpublish},"지도 공개를 중지할까요?");if(b.dataset.delete)action({action:"delete_restaurant",id:b.dataset.delete},"맛집 데이터를 삭제할까요?")});
+    $("importBtn").addEventListener("click",async()=>{try{const items=JSON.parse($("jsonInput").value);const j=await api("POST",{action:"import_json",items});$("importMessage").textContent=j.imported+"건을 검토함에 저장했습니다.";await load();showTab("inbox")}catch(err){$("importMessage").textContent="오류: "+err.message}});
+    const {data:{session:initial}}=await sb.auth.getSession();if(initial){session=initial;await enter()}
+  </script>
+</body>
+</html>
