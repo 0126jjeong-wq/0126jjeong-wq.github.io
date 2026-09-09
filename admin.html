@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="reelsmap-build" content="2026-09-09-analytics-v1">
+  <meta name="reelsmap-build" content="2026-09-09-admin-no-signup-v1">
   <title>릴스맛집지도 관리자</title>
   <style>
     :root{--ink:#202124;--muted:#747474;--line:#e8e8e8;--brand:#ff4d2e;--soft:#fff1ec;--ok:#16834b;--danger:#b62d24;--warn:#a45e00}
@@ -27,11 +27,11 @@
   <section id="loginView" class="login">
     <form id="loginForm" class="login-card">
       <div class="brand"><i>🍜</i> 릴스맛집지도</div><h1>관리자 로그인</h1>
-      <p>Supabase Auth로 인증된 관리자만 링크 검토함과 지도 데이터를 수정할 수 있습니다.</p>
+      <p>등록된 관리자 계정으로만 로그인할 수 있습니다.</p>
       <div class="field"><label for="email">이메일</label><input id="email" type="email" autocomplete="username" required></div>
       <div class="field"><label for="password">비밀번호</label><input id="password" type="password" minlength="8" autocomplete="current-password" required></div>
       <button id="loginBtn" class="btn primary wide" type="submit">로그인</button>
-      <button id="signupBtn" class="btn ghost wide" type="button" style="margin-top:8px">최초 관리자 계정 만들기</button><div id="loginMessage" class="message"></div>
+      <div id="loginMessage" class="message"></div>
     </form>
   </section>
 
@@ -54,7 +54,7 @@
             <div class="analytics-card"><b id="aRouteClicks">0</b><span>길찾기 클릭</span><small id="aRoutePeople">0명</small></div>
           </div>
           <div class="ranking"><h3>매장별 반응 순위</h3><div id="analyticsRanking"></div></div>
-          <p class="analytics-note">개인정보와 현재 위치는 저장하지 않습니다. 방문자·사람 수는 무작위 익명 브라우저 번호의 일방향 해시를 기준으로 집계합니다.</p>
+          <p class="analytics-note">개인정보와 현재 위치는 저장하지 않습니다. 방문자·사람 수는 무작위 익명 브라우저 번호의 일방향 해시를 기준으로 집계하며, 짧은 시간의 반복 클릭과 하루 상한 초과 요청은 통계에서 제외합니다.</p>
         </div>
       </section>
       <section id="inboxPanel" class="panel hidden">
@@ -110,7 +110,6 @@
     async function publish(event){event.preventDefault();$("publishBtn").disabled=true;$("editorMessage").textContent="";try{await api("POST",{action:"publish",restaurant:{id:$("fId").value||null,inbox_id:$("fInboxId").value||null,name:$("fName").value,address:$("fAddress").value,category:$("fCategory").value,region:$("fRegion").value,latitude:$("fLat").value,longitude:$("fLng").value,instagram_url:$("fUrl").value,creator_handle:$("fCreator").value,place_provider:$("fPlaceProvider").value,place_id:$("fPlaceId").value,place_url:$("fPlaceUrl").value,editor_note:$("fNote").value}});$("editor").close();await load();showTab("restaurants")}catch(error){$("editorMessage").textContent=error.message}finally{$("publishBtn").disabled=false}}
     async function action(payload,confirmText){if(confirmText&&!confirm(confirmText))return;try{await api("POST",payload);await load()}catch(error){alert(error.message)}}
     $("loginForm").addEventListener("submit",async event=>{event.preventDefault();$("loginMessage").textContent="";const{data,error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)return $("loginMessage").textContent=error.message;session=data.session;await enter()});
-    $("signupBtn").addEventListener("click",async()=>{const email=$("email").value.trim(),password=$("password").value;if(!email||password.length<8)return $("loginMessage").textContent="이메일과 8자 이상 비밀번호를 입력해주세요.";const{data,error}=await sb.auth.signUp({email,password});$("loginMessage").textContent=error?error.message:(data.session?"계정 생성 완료":"확인 메일을 누른 후 로그인해주세요.");if(data.session){session=data.session;await enter()}});
     async function enter(){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");try{await load()}catch(error){alert(error.message);await sb.auth.signOut();location.reload()}}
     $("logoutBtn").addEventListener("click",async()=>{await sb.auth.signOut();location.reload()});$("editorForm").addEventListener("submit",publish);$("searchPlaceBtn").addEventListener("click",searchPlace);$("placeCandidates").addEventListener("click",event=>{const button=event.target.closest("[data-place-index]");if(button)choosePlace(Number(button.dataset.placeIndex))});
     document.querySelectorAll("[data-close]").forEach(x=>x.addEventListener("click",()=>$(x.dataset.close).close()));document.querySelectorAll(".tab").forEach(x=>x.addEventListener("click",()=>showTab(x.dataset.tab)));document.querySelectorAll("[data-period]").forEach(x=>x.addEventListener("click",()=>{analyticsPeriod=x.dataset.period;renderAnalytics()}));$("inboxSearch").addEventListener("input",renderInbox);$("restaurantSearch").addEventListener("input",renderRestaurants);$("requestSearch").addEventListener("input",renderRequests);
@@ -122,3 +121,4 @@
   </script>
 </body>
 </html>
+
