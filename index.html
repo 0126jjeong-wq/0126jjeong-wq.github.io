@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#ff4d2e">
-  <meta name="reelsmap-build" content="2026-09-11-main-intro-pagination-v1">
+  <meta name="reelsmap-build" content="2026-09-12-photo-marker-zoom-v1">
   <meta name="description" content="위치가 확인된 서울 맛집을 지도에서 찾고 관련 Instagram 릴스로 분위기를 확인하세요.">
   <meta property="og:title" content="릴스맛집지도">
   <meta property="og:description" content="릴스로 먼저 보고, 지도에서 바로 찾는 서울 맛집 큐레이션">
@@ -30,7 +30,7 @@
     .empty{background:#fff;border:1px dashed #d7d5d1;border-radius:20px;padding:38px 20px;text-align:center;color:var(--muted);font-size:13px}.empty b{display:block;color:var(--ink);font-size:16px;margin-bottom:7px}
     .map-card{position:absolute;left:16px;top:16px;z-index:20;background:#fff;border:1px solid var(--line);border-radius:15px;padding:11px 13px;box-shadow:var(--shadow);font-size:11px;pointer-events:none}.map-card b{display:block;font-size:13px;margin-bottom:2px}.map-card span{color:var(--muted)}
     .map-tools{position:absolute;right:14px;bottom:20px;z-index:21;display:grid;gap:8px}.map-tool{border:1px solid #ddd;background:#fff;border-radius:12px;min-width:46px;height:46px;padding:0 10px;box-shadow:0 7px 22px #0002;font-size:11px;font-weight:900;color:#35363a}.map-tool.primary{color:#1378d1}.map-tool:active{transform:scale(.97)}
-    .map-pin{position:relative;display:grid;place-items:center;width:42px;height:42px;border:3px solid #fff;border-radius:18px 18px 18px 5px;background:#fff;box-shadow:0 7px 18px #0004;transform:rotate(-45deg);padding:0;cursor:pointer;color:#fff}.map-pin span{display:grid;place-items:center;transform:rotate(45deg);line-height:1}.map-pin .category-icon{width:21px;height:21px;stroke-width:2.1}.map-pin.cat-meal{background:#fff;color:#202124;border-color:#202124}.map-pin.cat-japanese{background:#ff7900}.map-pin.cat-western{background:#7b3fc6}.map-pin.cat-cafe{background:#f5c400;color:#2b2300}.map-pin.cat-bar{background:#18191b}.map-pin.active{width:48px;height:48px;z-index:2;box-shadow:0 0 0 4px #1687ff55,0 9px 22px #0005}.map-pin:focus-visible{outline:3px solid #1687ff;outline-offset:3px}.my-location-dot{width:19px;height:19px;border:4px solid #fff;border-radius:50%;background:#1687ff;box-shadow:0 0 0 7px #1687ff28,0 3px 10px #0003}
+    .map-pin{position:relative;display:grid;place-items:center;width:42px;height:42px;border:3px solid #fff;border-radius:18px 18px 18px 5px;background:#fff;box-shadow:0 7px 18px #0004;transform:rotate(-45deg);padding:0;cursor:pointer;color:#fff}.map-pin span{display:grid;place-items:center;transform:rotate(45deg);line-height:1}.map-pin .category-icon{width:21px;height:21px;stroke-width:2.1}.map-pin.cat-meal{background:#fff;color:#202124;border-color:#202124}.map-pin.cat-japanese{background:#ff7900}.map-pin.cat-western{background:#7b3fc6}.map-pin.cat-cafe{background:#f5c400;color:#2b2300}.map-pin.cat-bar{background:#18191b}.map-pin.photo-pin{width:50px;height:50px;padding:2px;border-color:#fff;border-radius:50%;background:#fff;transform:none;box-shadow:0 8px 21px #0005}.map-pin.photo-pin::after{content:"";position:absolute;left:50%;bottom:-5px;width:12px;height:12px;background:#fff;transform:translateX(-50%) rotate(45deg);z-index:-1}.map-pin.photo-pin span{width:100%;height:100%;border-radius:50%;overflow:hidden;transform:none}.map-pin.photo-pin img{width:100%;height:100%;object-fit:cover;display:block}.map-pin.active{width:48px;height:48px;z-index:2;box-shadow:0 0 0 4px #1687ff55,0 9px 22px #0005}.map-pin.photo-pin.active{width:56px;height:56px}.map-pin:focus-visible{outline:3px solid #1687ff;outline-offset:3px}.my-location-dot{width:19px;height:19px;border:4px solid #fff;border-radius:50%;background:#1687ff;box-shadow:0 0 0 7px #1687ff28,0 3px 10px #0003}
     .place-sheet{position:absolute;z-index:30;left:18px;right:18px;bottom:18px;max-width:470px;margin:auto;background:#fff;border:1px solid var(--line);border-radius:20px;padding:15px;box-shadow:0 18px 55px #0004}.sheet-close{position:absolute;right:11px;top:10px;width:32px;height:32px;border:0;border-radius:10px;background:#f4f3f1;color:#777;font-size:17px}.place-sheet h3{margin:1px 38px 5px 0;font-size:18px;letter-spacing:-.5px}.sheet-address{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sheet-tags{display:flex;gap:5px;flex-wrap:wrap;margin:10px 0}.sheet-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px}.sheet-actions a{height:42px;border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:11px;font-weight:900}.sheet-actions .route{background:#fee500;border-color:#f3d900;color:#171717}.sheet-actions .reel{background:var(--brand);border-color:var(--brand);color:#fff}.map-error{position:absolute;z-index:40;inset:0;display:grid;place-items:center;padding:24px;background:#f3f2ef}.map-error-card{max-width:340px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;text-align:center;box-shadow:var(--shadow)}.map-error-card b{display:block;font-size:17px;margin-bottom:7px}.map-error-card span{color:var(--muted);font-size:12px;line-height:1.55}
     .registration-view{display:none}.registration-panel{background:#fff;border:1px solid var(--line);border-radius:20px;padding:18px}.registration-panel h2{font-size:21px;margin:6px 0}.registration-panel p{font-size:12px;color:var(--muted);margin:0 0 13px;line-height:1.55}.pagination{display:flex;align-items:center;justify-content:center;gap:5px;padding:5px 0 20px}.page-btn{min-width:34px;height:34px;padding:0 9px;border:1px solid var(--line);border-radius:10px;background:#fff;color:#55575c;font-size:11px;font-weight:850}.page-btn.on{background:var(--brand);border-color:var(--brand);color:#fff}.page-btn:disabled{opacity:.4;cursor:default}.site-footer{border-top:1px solid var(--line);padding:16px 4px 6px;color:var(--muted);font-size:10px;line-height:1.6}.site-footer nav{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:5px}.site-footer a{font-weight:800}.site-footer p{margin:0}.bottom-nav{display:none}.toast{position:fixed;z-index:3000;left:50%;bottom:25px;transform:translate(-50%,20px);background:#1f2023;color:#fff;border-radius:12px;padding:11px 15px;font-size:12px;font-weight:750;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translate(-50%,0)}
     @media(max-width:760px){
@@ -190,6 +190,7 @@
       map.addControl(new kakao.maps.MapTypeControl(),kakao.maps.ControlPosition.TOPRIGHT);
       map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
       kakao.maps.event.addListener(map,"click",closePlaceSheet);
+      kakao.maps.event.addListener(map,"zoom_changed",updateMarkerAppearances);
       mapReady=true;$("mapError").classList.add("hidden");renderMarkers();renderLocationMarker();
     }
     function closePlaceSheet(){activeId=null;$("placeSheet").classList.add("hidden");document.querySelectorAll(".card").forEach(c=>c.classList.remove("active"));markerById.forEach(item=>item.button.classList.remove("active"))}
@@ -237,14 +238,21 @@
       const dot=document.createElement("div");dot.className="my-location-dot";dot.title="내 위치";
       locationOverlay=new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(userLocation.lat,userLocation.lng),content:dot,xAnchor:.5,yAnchor:.5,zIndex:50});
     }
+    function updateMarkerAppearance(button,x){
+      const image=cardImage(x),showPhoto=Boolean(image)&&button.dataset.photoBroken!=="1"&&mapReady&&map.getLevel()<=5;
+      button.className=`map-pin ${categoryClass(x)} ${String(activeId)===String(x.id)?"active":""} ${showPhoto?"photo-pin":""}`;
+      button.innerHTML=showPhoto?`<span><img src="${esc(image)}" alt="" loading="lazy" decoding="async"></span>`:`<span>${categoryIcon(x)}</span>`;
+      const photo=button.querySelector("img");if(photo)photo.addEventListener("error",()=>{button.dataset.photoBroken="1";updateMarkerAppearance(button,x)},{once:true});
+    }
+    function updateMarkerAppearances(){markerById.forEach(item=>updateMarkerAppearance(item.button,item.restaurant))}
     function renderMarkers(){
       markerOverlays.forEach(overlay=>overlay.setMap(null));markerOverlays=[];markerById.clear();if(!mapReady)return;
       filtered.forEach(x=>{
         const lat=Number(x.latitude),lng=Number(x.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
-        const position=new kakao.maps.LatLng(lat,lng),button=document.createElement("button");button.type="button";button.className=`map-pin ${categoryClass(x)} ${String(activeId)===String(x.id)?"active":""}`;button.setAttribute("aria-label",`${x.name} · ${x.category||"식당"} 지도 마커`);button.innerHTML=`<span>${categoryIcon(x)}</span>`;
+        const position=new kakao.maps.LatLng(lat,lng),button=document.createElement("button");button.type="button";button.setAttribute("aria-label",`${x.name} · ${x.category||"식당"} 지도 마커`);updateMarkerAppearance(button,x);
         button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();kakao.maps.event.preventMap();selectRestaurant(x.id,false)});
         const overlay=new kakao.maps.CustomOverlay({map,position,content:button,xAnchor:.5,yAnchor:1.08,zIndex:String(activeId)===String(x.id)?12:8});
-        markerOverlays.push(overlay);markerById.set(String(x.id),{overlay,button,position});
+        markerOverlays.push(overlay);markerById.set(String(x.id),{overlay,button,position,restaurant:x});
       });
       fitMapToMarkers();renderLocationMarker();
     }
