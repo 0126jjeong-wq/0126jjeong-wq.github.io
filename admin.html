@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="reelsmap-build" content="2026-09-14-private-images-mfa-v3">
+  <meta name="reelsmap-build" content="2026-09-14-private-images-mfa-v4">
   <title>릴스맛집지도 관리자</title>
   <style>
     :root{--ink:#202124;--muted:#747474;--line:#e8e8e8;--brand:#ff4d2e;--soft:#fff1ec;--ok:#16834b;--danger:#b62d24;--warn:#a45e00}
@@ -28,7 +28,7 @@
   <section id="loginView" class="login">
     <form id="loginForm" class="login-card">
       <div class="brand"><i>🍜</i> 릴스맛집지도</div><h1>관리자 로그인</h1>
-      <p>등록된 관리자 계정으로만 로그인할 수 있습니다.</p><p style="font-size:10px;color:#16834b;text-align:center">최종 수정본 · 2026.09.14 · MFA 세션 오류 수정</p>
+      <p>등록된 관리자 계정으로만 로그인할 수 있습니다.</p><p style="font-size:10px;color:#16834b;text-align:center">최종 수정본 · 2026.09.14 · MFA 세션 갱신 수정 v4</p>
       <div class="field"><label for="email">이메일</label><input id="email" type="email" autocomplete="username" required></div>
       <div class="field"><label for="password">비밀번호</label><input id="password" type="password" minlength="8" autocomplete="current-password" required></div>
       <button id="loginBtn" class="btn primary wide" type="submit">로그인</button>
@@ -185,7 +185,7 @@
       $("loginView").classList.add("hidden");$("appView").classList.add("hidden");$("mfaView").classList.remove("hidden");$("mfaCode").value="";$("mfaCode").focus()
     }
     $("loginForm").addEventListener("submit",async event=>{event.preventDefault();$("loginMessage").textContent="";$("loginBtn").disabled=true;try{const{data,error}=await sb.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});if(error)throw error;await continueLogin(data.session)}catch(error){$("loginMessage").textContent=error.message}finally{$("loginBtn").disabled=false}});
-    $("mfaForm").addEventListener("submit",async event=>{event.preventDefault();$("mfaMessage").textContent="";$("mfaBtn").disabled=true;try{const code=$("mfaCode").value.replace(/\D/g,"");if(code.length!==6)throw new Error("6자리 인증번호를 입력해주세요.");const{data:challenge,error:challengeError}=await sb.auth.mfa.challenge({factorId:mfaFactorId});if(challengeError)throw challengeError;const{data:verified,error:verifyError}=await sb.auth.mfa.verify({factorId:mfaFactorId,challengeId:challenge.id,code});if(verifyError)throw verifyError;session=verified.session;if(!session)throw new Error("로그인 상태를 확인하지 못했습니다.");$("mfaView").classList.add("hidden");await enter()}catch(error){$("mfaMessage").textContent=error.message}finally{$("mfaBtn").disabled=false}});
+    $("mfaForm").addEventListener("submit",async event=>{event.preventDefault();$("mfaMessage").textContent="";$("mfaBtn").disabled=true;try{const code=$("mfaCode").value.replace(/\D/g,"");if(code.length!==6)throw new Error("6자리 인증번호를 입력해주세요.");const{data:challenge,error:challengeError}=await sb.auth.mfa.challenge({factorId:mfaFactorId});if(challengeError)throw challengeError;const{error:verifyError}=await sb.auth.mfa.verify({factorId:mfaFactorId,challengeId:challenge.id,code});if(verifyError)throw verifyError;await new Promise(resolve=>setTimeout(resolve,350));const{data:refreshed,error:refreshError}=await sb.auth.refreshSession();if(refreshError)throw refreshError;session=refreshed.session;if(!session)throw new Error("인증 후 로그인 상태를 확인하지 못했습니다. 잠시 후 다시 시도해주세요.");$("mfaView").classList.add("hidden");await enter()}catch(error){$("mfaMessage").textContent=error.message}finally{$("mfaBtn").disabled=false}});
     async function enter(){$("loginView").classList.add("hidden");$("appView").classList.remove("hidden");try{await load()}catch(error){$("appView").classList.add("hidden");$("loginView").classList.remove("hidden");$("loginMessage").textContent=error.message+" 다시 로그인해주세요."}}
     $("logoutBtn").addEventListener("click",async()=>{await sb.auth.signOut();location.reload()});$("changePasswordBtn").addEventListener("click",()=>{$("passwordForm").reset();$("passwordMessage").textContent="";$("passwordEditor").showModal()});$("passwordForm").addEventListener("submit",async event=>{event.preventDefault();const next=$("newPassword").value,confirmValue=$("confirmPassword").value;$("passwordMessage").textContent="";if(next!==confirmValue)return $("passwordMessage").textContent="새 비밀번호가 서로 다릅니다.";$("passwordSaveBtn").disabled=true;try{const{error}=await sb.auth.updateUser({password:next});if(error)throw error;$("passwordMessage").style.color="var(--ok)";$("passwordMessage").textContent="비밀번호가 변경됐습니다. 현재 기기는 계속 로그인되어 있습니다.";$("passwordForm").reset()}catch(error){$("passwordMessage").style.color="var(--danger)";$("passwordMessage").textContent=error.message}finally{$("passwordSaveBtn").disabled=false}});$("editorForm").addEventListener("submit",publish);$("saveDraftBtn").addEventListener("click",saveDraft);$("searchPlaceBtn").addEventListener("click",searchPlace);$("placeCandidates").addEventListener("click",event=>{const button=event.target.closest("[data-place-index]");if(button)choosePlace(Number(button.dataset.placeIndex))});
     $("fImageFile").addEventListener("change",()=>{const file=$("fImageFile").files?.[0];if(!file)return showImagePreview($("fImageUrl").value);const url=URL.createObjectURL(file);showImagePreview(url);$("fImagePreview").onload=()=>{URL.revokeObjectURL(url);$("fImagePreview").onload=null}});
