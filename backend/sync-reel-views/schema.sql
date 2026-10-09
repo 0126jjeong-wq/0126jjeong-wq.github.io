@@ -1,0 +1,21 @@
+create extension if not exists pg_net with schema extensions;
+create extension if not exists pg_cron;
+create table public.reel_sync_config(id boolean primary key default true check(id), auth_sha256 text not null);
+create table public.reel_sync_creators(handle text primary key, enabled boolean not null default true, last_success_at timestamptz, last_error text);
+create table public.reel_sync_runs(id uuid primary key default gen_random_uuid(), started_at timestamptz not null default now(), finished_at timestamptz, status text not null default 'running', summary jsonb);
+create table public.reel_media_stats(media_id text primary key, creator_handle text not null references public.reel_sync_creators(handle), permalink text not null, media_type text, posted_at timestamptz not null, view_count bigint check(view_count>=0), observed_at timestamptz not null, view_delta bigint, views_per_hour double precision, measurement_status text not null, million_reached boolean not null default false);
+create index reel_media_stats_creator_idx on public.reel_media_stats(creator_handle);
+create table public.reel_view_snapshots(run_id uuid not null references public.reel_sync_runs(id), media_id text not null references public.reel_media_stats(media_id), observed_at timestamptz not null, view_count bigint check(view_count>=0), primary key(run_id,media_id));
+create index reel_view_snapshots_media_time_idx on public.reel_view_snapshots(media_id,observed_at desc);
+alter table public.reel_sync_config enable row level security;
+alter table public.reel_sync_creators enable row level security;
+alter table public.reel_sync_runs enable row level security;
+alter table public.reel_media_stats enable row level security;
+alter table public.reel_view_snapshots enable row level security;
+revoke all on public.reel_sync_config,public.reel_sync_creators,public.reel_sync_runs,public.reel_media_stats,public.reel_view_snapshots from anon,authenticated;
+grant all on public.reel_sync_config,public.reel_sync_creators,public.reel_sync_runs,public.reel_media_stats,public.reel_view_snapshots to service_role;
+insert into public.reel_sync_creators(handle) values ('sowon_yam2'),('joonmattang'),('muckboeun');
+do $setup$ declare k text:=encode(extensions.gen_random_bytes(32),'hex'); begin
+perform vault.create_secret(k,'reel_sync_scheduler');
+insert into public.reel_sync_config(id,auth_sha256) values(true,encode(extensions.digest(k,'sha256'),'hex'));
+end $setup$;

@@ -1,0 +1,6 @@
+{
+  "appId": "com.myreelsmap.app",
+  "appName": "릴스맛집지도",
+  "webDir": "dist",
+  "ios": { "contentInset": "automatic" }
+}
