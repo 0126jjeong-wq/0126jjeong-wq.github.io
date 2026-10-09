@@ -22,9 +22,7 @@
     <section class="hero"><div class="eyebrow">SERVICE & RIGHTS</div><h1>콘텐츠와 매장을 함께 존중하는 지도</h1><p>릴스맛집지도는 확인된 매장 위치와 관련 Instagram 게시물을 연결하는 독립 큐레이션 서비스입니다.</p></section>
     <nav class="jump"><a href="#service">서비스 안내</a><a href="#creator-submit">크리에이터</a><a href="#merchant-support">매장 운영자</a><a href="#privacy">개인정보처리방침</a><a href="#request">수정·삭제 요청</a></nav>
 
-
     <section id="service" class="card"><h2>서비스 및 출처 정책</h2><p>지도에는 관리자가 상호·주소·위치를 확인한 매장만 공개합니다. Instagram 사진·영상·캡션을 복제하거나 별도로 저장하지 않으며, 이용자가 해당 게시물을 직접 확인할 수 있도록 링크만 제공합니다.</p><ul><li>비공개 계정이나 접근이 제한된 게시물은 등록하지 않습니다.</li><li>확인된 크리에이터 계정명은 관련 릴스와 함께 표시합니다.</li><li>같은 매장의 릴스가 여러 개면 한 매장 아래 관련 링크로 묶습니다.</li><li>게시물이 삭제·비공개되거나 매장 정보가 달라지면 관련 링크를 수정 또는 삭제합니다.</li></ul><p class="notice">릴스맛집지도는 Instagram 또는 Meta와 공식적으로 관련되거나 후원받는 서비스가 아닙니다. 콘텐츠 권리는 각 게시자 또는 정당한 권리자에게 있습니다.</p></section>
-
 
     <section id="creator-submit" class="card"><h2>크리에이터 · 내 릴스 등록</h2><p>본인이 게시한 공개 맛집 릴스를 등록 요청할 수 있습니다. 계정명과 매장 위치를 관리자가 확인한 뒤 지도에 공개하며, 공개된 링크는 언제든 수정·삭제 요청할 수 있습니다.</p>
       <form id="creatorForm" class="grid">
@@ -39,15 +37,11 @@
       <div class="role-actions"><a href="?role=creator&type=correction#request">내 콘텐츠 정보 수정</a><a href="?role=creator&type=removal#request">내 콘텐츠 삭제 요청</a></div>
     </section>
 
-
     <section id="merchant-support" class="card"><h2>매장 운영자</h2><p>가게명·주소·카테고리가 잘못됐거나 매장 노출을 원하지 않는 경우 바로 요청할 수 있습니다. 확인 가능한 내용을 함께 보내주면 더 빠르게 처리할 수 있습니다.</p><div class="role-actions"><a href="?role=merchant&type=correction#request">매장 정보 수정</a><a href="?role=merchant&type=removal#request">매장 노출 중단</a></div></section>
-
 
     <section id="privacy" class="card"><h2>개인정보처리방침</h2><h3>앱 로그인 및 계정 정보 (Google)</h3><p>마이릴스맵 앱은 Google 계정 로그인을 제공합니다. 로그인 시 Google로부터 Supabase Auth를 통해 사용자 식별자, 이메일 주소, 이름 및 프로필 사진 등 기본 프로필 정보를 받아 로그인과 계정 식별에 사용합니다. Google 비밀번호는 릴스맛집지도에 전달되거나 저장되지 않습니다. 로그인 계정에 저장한 릴스·맛집과 이용자가 선택한 동의 상태는 서비스를 제공하고 계정별 데이터를 구분하기 위해 Supabase에 저장됩니다. 해당 정보는 계정 이용 중 보관하며, 계정 또는 관련 개인정보 삭제는 아래 ‘정보 수정·삭제 및 권리 요청’ 양식에서 개인정보 삭제를 신청할 수 있습니다. Google 계정 기본정보 외에 Gmail, 연락처, Drive 자료는 요청하지 않습니다.</p><h3>일반 이용</h3><p>맛집 검색과 지도 열람에는 회원가입이 필요하지 않습니다. ‘저장’한 맛집 목록은 이용자의 브라우저 저장공간(localStorage)에만 보관되며 운영 서버로 전송되지 않습니다.</p><h3>내 주변 맛집</h3><p>사이트 접속 시 브라우저가 위치 사용 권한을 요청할 수 있습니다. 허용한 현재 위치는 가까운 맛집의 거리 계산과 정렬에만 일시적으로 사용하며 운영 서버로 전송하거나 저장하지 않습니다. 위치 좌표는 페이지를 닫거나 새로고침하면 폐기되며, 권한을 거절해도 최신 등록순으로 서비스를 이용할 수 있습니다.</p><h3>익명 이용 통계</h3><p>브라우저에 무작위 익명 번호를 저장하고, 운영 서버에는 그 번호를 그대로 보관하지 않고 일방향 해시로 바꿔 기록합니다. 사이트 방문, 매장 선택, ‘릴스 보기’, ‘길찾기’ 이용 시 익명 해시, 매장 식별값, 버튼 종류, 발생 시각을 이용해 사람 수와 클릭 수를 집계합니다. 소비자 화면에는 매장별 최근 7일 길찾기 클릭 수만 대략적인 횟수로 공개합니다. 회원 정보, Instagram 계정, 현재 위치, 이름이나 연락처는 이 통계에 저장하지 않습니다. 브라우저 데이터를 삭제하면 새로운 익명 번호가 만들어질 수 있습니다.</p><h3>릴스 등록 및 수정·삭제 요청</h3><p>크리에이터 등록 시 공개 계정명·가게명·게시물 URL을 수집합니다. 요청 양식 제출 시 요청자 구분, 이름(선택), 이메일, 요청 내용, 관련 URL을 처리 목적으로 수집합니다. 요청 정보는 처리 완료 또는 반려 후 30일이 지나면 삭제합니다.</p><h3>수집하지 않는 정보</h3><p>Instagram 비밀번호, 비공개 게시물, 민감정보 및 게시물 방문자의 계정정보는 수집하지 않습니다.</p></section>
 
-
     <section id="terms" class="card"><h2>이용 안내</h2><p>매장명·주소·영업 상태 등은 변경될 수 있으므로 방문 전 매장 또는 공식 지도 서비스에서 다시 확인해주세요. 본 서비스는 연결된 게시물의 내용이나 매장 이용 결과를 보증하지 않습니다.</p><ul><li>게시자·권리자·매장 운영자의 요청이 확인되면 관련 링크나 매장 정보를 신속히 수정·삭제합니다.</li><li>크리에이터 등록 요청은 계정명과 매장 정보를 확인한 뒤 공개합니다.</li><li>광고 또는 유료 노출이 도입되는 경우 일반 큐레이션과 구분해 표시합니다.</li><li>서비스 데이터의 무단 대량 수집·복제·재판매는 허용하지 않습니다.</li></ul></section>
-
 
     <section id="request" class="card"><h2>정보 수정·삭제 및 권리 요청</h2><p>크리에이터, 매장 운영자, 게시물 권리자는 아래에서 정보 수정·삭제·저작권·개인정보 관련 요청을 제출할 수 있습니다.</p>
       <form id="requestForm" class="grid">
@@ -62,6 +56,52 @@
         <div class="full"><button id="submitBtn" class="submit" type="submit">요청 접수하기</button><div id="formMessage" class="form-message" aria-live="polite"></div></div>
       </form>
     </section>
-    <footer>시행일: 2026년 8월 16일<br>© 릴스맛집지도</footer>
+    <footer>시행일: 2026년 10월 10일<br>© 릴스맛집지도</footer>
   </main>
   <script>
+    const RIGHTS_ENDPOINT="https://tbyfoxsyadmpeeatyzvm.supabase.co/functions/v1/submit-rights-request";
+    const CREATOR_ENDPOINT="https://tbyfoxsyadmpeeatyzvm.supabase.co/functions/v1/collect-instagram";
+    const $=id=>document.getElementById(id);
+    let creatorTurnstileToken="",creatorTurnstileWidget=null,creatorTurnstileRequired=false;
+    window.onCreatorTurnstileSuccess=token=>{creatorTurnstileToken=token};
+    window.onCreatorTurnstileExpired=()=>{creatorTurnstileToken=""};
+    async function configureCreatorBotCheck(){
+      try{
+        const response=await fetch(CREATOR_ENDPOINT,{method:"GET"}),config=await response.json();
+        if(!config.turnstile_site_key)return;
+        creatorTurnstileRequired=true;
+        const container=$("creatorBotCheck");container.classList.remove("hidden");container.textContent="로봇 확인을 불러오는 중…";
+        const script=document.createElement("script");script.src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";script.async=true;
+        script.onload=()=>{container.textContent="";creatorTurnstileWidget=turnstile.render(container,{sitekey:config.turnstile_site_key,callback:window.onCreatorTurnstileSuccess,"expired-callback":window.onCreatorTurnstileExpired,"error-callback":window.onCreatorTurnstileExpired})};
+        script.onerror=()=>{container.textContent="로봇 확인을 불러오지 못했습니다. 잠시 후 다시 시도해주세요."};
+        document.head.appendChild(script);
+      }catch{$("creatorBotCheck").textContent=""}
+    }
+    configureCreatorBotCheck();
+    const params=new URLSearchParams(location.search),allowedRoles=new Set(["creator","merchant","visitor","rights_holder","other"]),allowedTypes=new Set(["correction","removal","copyright","privacy","other"]);
+    if(allowedRoles.has(params.get("role")))$("requesterRole").value=params.get("role");
+    if(allowedTypes.has(params.get("type")))$("requestType").value=params.get("type");
+
+    $("creatorForm").addEventListener("submit",async event=>{
+      event.preventDefault();
+      const button=$("creatorSubmitBtn"),message=$("creatorMessage");button.disabled=true;message.className="form-message";message.textContent="등록 요청을 보내는 중…";
+      try{
+        if(creatorTurnstileRequired&&!creatorTurnstileToken)throw new Error("로봇 확인을 완료해주세요.");
+        const response=await fetch(CREATOR_ENDPOINT,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({source_url:$("creatorUrl").value,restaurant_name:$("creatorRestaurant").value,creator_handle:$("creatorHandle").value,submission_type:"creator",website:$("creatorWebsite").value,turnstile_token:creatorTurnstileToken})});
+        const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||"등록 요청에 실패했습니다.");
+        $("creatorForm").reset();message.className="form-message ok";message.textContent=result.duplicate?"이미 등록된 링크입니다. 계정명 확인 요청을 남겼습니다.":"등록 요청이 접수됐습니다. 확인 후 지도에 공개하겠습니다.";
+      }catch(error){message.textContent=error.message}finally{button.disabled=false;creatorTurnstileToken="";if(creatorTurnstileWidget!==null)turnstile.reset(creatorTurnstileWidget)}
+    });
+
+    $("requestForm").addEventListener("submit",async event=>{
+      event.preventDefault();
+      const button=$("submitBtn"),message=$("formMessage");button.disabled=true;message.className="form-message";message.textContent="요청을 접수하는 중…";
+      try{
+        const response=await fetch(RIGHTS_ENDPOINT,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({requester_role:$("requesterRole").value,request_type:$("requestType").value,restaurant_name:$("restaurantName").value,requester_name:$("requesterName").value,requester_email:$("requesterEmail").value,source_url:$("sourceUrl").value,message:$("requestMessage").value,website:$("website").value})});
+        const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||"접수에 실패했습니다.");
+        $("requestForm").reset();message.className="form-message ok";message.textContent="요청이 접수되었습니다. 확인 후 처리하겠습니다.";
+      }catch(error){message.textContent=error.message}finally{button.disabled=false}
+    });
+  </script>
+</body>
+</html>
