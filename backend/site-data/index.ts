@@ -8,14 +8,32 @@ const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,
 Deno.serve(async(req:Request)=>{
   if(req.method==="OPTIONS")return new Response("ok",{headers:cors});
   if(req.method!=="GET")return json({ok:false,error:"GET only"},405);
-  const supabase=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const projectUrl=Deno.env.get("SUPABASE_URL")!;
+  const secretKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  // Supabase's opaque sb_secret_* keys belong in `apikey`, not `Authorization`.
+  // Passing them as Bearer tokens makes PostgREST reject the request with PGRST303.
+  // Leave Authorization unset when it only repeats the API key so the gateway can
+  // translate the secret API key into its internal service-role JWT.
+  const supabase=createClient(projectUrl,secretKey,{
+    global:{fetch:async(input,init={})=>{
+      const request=input instanceof Request?input:new Request(input,init);
+      const headers=new Headers(request.headers);
+      if(headers.get("authorization")===`Bearer ${secretKey}`)headers.delete("authorization");
+      return fetch(new Request(request,{headers}));
+    }}
+  });
   const [{data,error},{data:routeRows,error:routeError}]=await Promise.all([
     supabase.from("restaurants")
       .select("id,inbox_id,name,address,region,category,latitude,longitude,instagram_url,creator_handle,status,place_provider,place_id,place_url,image_path,image_rights_status,menu_names,reel_click_count,route_click_count,created_at,updated_at")
       .eq("status","published").order("created_at",{ascending:false}).limit(500),
     supabase.rpc("get_public_route_counts")
   ]);
-  if(error||routeError)return json({ok:false,error:"맛집 데이터를 불러오지 못했습니다."},500);
+  if(error){
+    console.error("restaurants query failed",{code:error.code,message:error.message});
+    return json({ok:false,error:"맛집 데이터를 불러오지 못했습니다."},500);
+  }
+  // Route counts are supplementary. A transient RPC failure must not hide the list.
+  if(routeError)console.warn("route count query failed",{code:routeError.code,message:routeError.message});
   const {data:signals,error:signalError}=await supabase.from("registered_reel_categories").select("media_id,permalink,creator_handle,posted_at,observed_at,view_count,view_delta,projected_24h_delta,post_age_group,million_reached,rapid_growth,measurement_status").limit(1000);
   const signalByCode=new Map((signals||[]).filter((m:any)=>reelCode(m.permalink)).map((m:any)=>[reelCode(m.permalink),m]));
   const routeCounts=new Map((routeRows||[]).map((row:any)=>[String(row.restaurant_id),{week:Number(row.route_clicks_7d||0),all:Number(row.route_clicks_all||0)}]));
