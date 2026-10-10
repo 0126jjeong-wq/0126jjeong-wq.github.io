@@ -90,3 +90,6 @@ end;
 $function$;
 revoke all on function public.get_admin_member_management(date, date, text, integer, integer) from public, anon, authenticated;
 grant execute on function public.get_admin_member_management(date, date, text, integer, integer) to service_role;
+
+-- Keep the staff exception server-side; do not expose staff membership via RPC.
+drop function if exists public.current_user_can_use_staff_nickname();
