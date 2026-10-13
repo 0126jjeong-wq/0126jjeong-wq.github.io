@@ -121,7 +121,7 @@
       "술집":'<path d="M5 3h14l-7 8-7-8ZM12 11v7M8 21h8M7 6h10"/>'
     };
     const PAGE_SIZE=10;
-    const reelFilters=[{key:"rising",label:"급상승"},{key:"3days",label:"3일 급상승"},{key:"5days",label:"5일 급상승"},{key:"million",label:"100만+"}];
+    const reelFilters=[{key:"million",label:"100만+"}];
     let restaurants=[],filtered=[],mapFiltered=[],activeCategory="전체",mapCategory="전체",activeReelFilter="",activeSort="default",activeView="list",activeId=null,userLocation=null,locationState="idle",currentPage=1;
     let map=null,mapReady=false,locationOverlay=null,markerOverlays=[];
     const saved=new Set(JSON.parse(localStorage.getItem("reelsmap_saved")||"[]"));
@@ -147,8 +147,7 @@
       const checked=Number.isFinite(when.getTime())?when.toLocaleString("ko-KR",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):"최근";
       return `<span class="tag" title="${esc(checked)} 수집 기준">${age}${label}릴스 ${Number(s.view_count).toLocaleString("ko-KR")}회</span>`;
     }
-    function matchesSignal(s,key){return key==="rising"?s.rapid_growth===true:key==="3days"?s.rapid_growth===true&&s.post_age_group==="first_3_days":key==="5days"?s.rapid_growth===true&&["first_3_days","days_4_to_5"].includes(s.post_age_group):s.million_reached===true}
-    function growthScore(x){return Math.max(0,...(x.reels||[]).map(r=>r.signal).filter(s=>s&&matchesSignal(s,activeReelFilter)).map(s=>Number(s.projected_24h_delta)||0))}
+    function matchesSignal(s,key){return key==="million"&&s.million_reached===true}
     function matchesReelFilter(x){
       if(!activeReelFilter)return true;
       return (x.reels||[]).some(r=>r.signal&&Number.isFinite(r.signal.view_count)&&matchesSignal(r.signal,activeReelFilter));
@@ -248,7 +247,7 @@
     function applyFilters(resetPage=false){
       if(resetPage)currentPage=1;
       const q=$("searchInput").value.trim().toLowerCase();
-      filtered=restaurants.filter(x=>matchesReelFilter(x)&&(activeCategory==="전체"||x.category===activeCategory||(!x.category&&activeCategory==="식사"))&&(!q||[x.name,x.address,x.region,x.category,...(x.menu_names||[])].join(" ").toLowerCase().includes(q))&&(activeView!=="saved"||saved.has(x.id))).sort((a,b)=>activeSort==="nearby"?(Number.isFinite(a.distance)?a.distance:Infinity)-(Number.isFinite(b.distance)?b.distance:Infinity)||b.reels.length-a.reels.length:activeSort==="route"?Number(b.route_clicks_7d||0)-Number(a.route_clicks_7d||0)||new Date(b.created_at||0)-new Date(a.created_at||0):["rising","3days","5days"].includes(activeReelFilter)?growthScore(b)-growthScore(a)||new Date(b.created_at||0)-new Date(a.created_at||0):new Date(b.created_at||0)-new Date(a.created_at||0));
+      filtered=restaurants.filter(x=>matchesReelFilter(x)&&(activeCategory==="전체"||x.category===activeCategory||(!x.category&&activeCategory==="식사"))&&(!q||[x.name,x.address,x.region,x.category,...(x.menu_names||[])].join(" ").toLowerCase().includes(q))&&(activeView!=="saved"||saved.has(x.id))).sort((a,b)=>activeSort==="nearby"?(Number.isFinite(a.distance)?a.distance:Infinity)-(Number.isFinite(b.distance)?b.distance:Infinity)||b.reels.length-a.reels.length:activeSort==="route"?Number(b.route_clicks_7d||0)-Number(a.route_clicks_7d||0)||new Date(b.created_at||0)-new Date(a.created_at||0):new Date(b.created_at||0)-new Date(a.created_at||0));
       mapFiltered=restaurants.filter(x=>matchesReelFilter(x)&&(mapCategory==="전체"||x.category===mapCategory||(!x.category&&mapCategory==="식사"))&&(!q||[x.name,x.address,x.region,x.category,...(x.menu_names||[])].join(" ").toLowerCase().includes(q)));
       currentPage=Math.min(currentPage,Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)));render();
     }
@@ -263,7 +262,7 @@
     function render(){
       const totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)),pageStart=(currentPage-1)*PAGE_SIZE,pageRows=filtered.slice(pageStart,pageStart+PAGE_SIZE);
       $("topCount").textContent=restaurants.length;$("resultCount").textContent=filtered.length+"곳";$("mapCount").textContent=(mapCategory==="전체"?"전체":mapCategory)+" · "+mapFiltered.length+"곳 표시 중";$("sectionTitle").textContent=activeView==="saved"?"내가 저장한 맛집":activeSort==="nearby"?"내 주변 맛집":activeSort==="route"?"길찾기 인기 맛집":activeCategory==="전체"?"서울 맛집":activeCategory+" 맛집";
-      $("sortNote").textContent=activeSort==="route"?"최근 7일간 가장 많은 길찾기 클릭 순":activeSort==="nearby"?"현재 위치에서 가까운 순":["rising","3days","5days"].includes(activeReelFilter)?"최근 조회수 증가 속도 순 · 24시간 환산 1만 회 이상, 현재 조회수의 10% 이상":"";$("sortNote").classList.toggle("hidden",!$("sortNote").textContent||activeView==="saved");
+      $("sortNote").textContent=activeSort==="route"?"최근 7일간 가장 많은 길찾기 클릭 순":activeSort==="nearby"?"현재 위치에서 가까운 순":activeReelFilter==="million"?"현재 조회수 100만 이상인 릴스":"";$("sortNote").classList.toggle("hidden",!$("sortNote").textContent||activeView==="saved");
       if(activeId&&!filtered.some(x=>String(x.id)===String(activeId))){activeId=null;$("placeSheet").classList.add("hidden")}
       $("categoryFilters").innerHTML=categories.map(c=>`<button class="chip ${c===activeCategory?"on":""}" data-category="${c}" aria-pressed="${c===activeCategory}">${esc(categoryLabels[c]||c)}</button>`).join("");
       $("sortFilters").innerHTML=sortOptions.map(option=>`<button class="chip sort ${activeSort===option.key?"on":""}" data-sort="${option.key}">${option.label}</button>`).join("");
