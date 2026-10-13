@@ -117,9 +117,6 @@
     const categories=["전체","식사","일식","양식","카페·디저트","술집"];
     const reelFilters=[
       {key:"all",label:"전체"},
-      {key:"rising",label:"급상승"},
-      {key:"first3",label:"게시 3일"},
-      {key:"days4to5",label:"게시 4~5일"},
       {key:"million",label:"100만+"}
     ];
     const sortOptions=[{key:"nearby",label:"내 주변"},{key:"route",label:"길찾기 인기순"}];
@@ -147,7 +144,7 @@
     const cardVisual=(x,i)=>{const image=cardImage(x);return `<div class="visual ${categoryClass(x)} ${image?"has-photo":""}"><span class="rank">#${i+1}</span>${image?`<img class="visual-photo" src="${esc(image)}" alt="${esc(x.name)} 대표 음식 사진" loading="lazy" decoding="async">`:""}${categoryIcon(x)}</div>`};
     const validSignal=signal=>signal&&typeof signal==="object";
     const reelSignals=x=>(x.reels||[]).map(reel=>reel.reel_signal).filter(validSignal);
-    const matchesReelFilter=(x,key=activeReelFilter)=>key==="all"||reelSignals(x).some(signal=>key==="rising"?signal.rapid_growth===true:key==="first3"?signal.post_age_group==="first_3_days":key==="days4to5"?signal.post_age_group==="days_4_to_5":key==="million"?signal.million_reached===true:false);
+    const matchesReelFilter=(x,key=activeReelFilter)=>key==="all"||key==="million"&&reelSignals(x).some(signal=>signal.million_reached===true);
     const maxViewCount=x=>reelSignals(x).reduce((max,signal)=>Math.max(max,Number(signal.view_count)||0),0);
     const reelGrowthScore=x=>reelSignals(x).reduce((max,signal)=>Math.max(max,Number(signal.projected_24h_delta)||Number(signal.view_delta)||0),0);
     const formatCount=value=>{const n=Number(value)||0;if(n>=100000000)return `${(n/100000000).toFixed(n>=1000000000?0:1).replace(/\.0$/,"")}억`;if(n>=10000)return `${(n/10000).toFixed(n>=100000?0:1).replace(/\.0$/,"")}만`;return n.toLocaleString("ko-KR")};
@@ -271,7 +268,7 @@
       const totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)),pageStart=(currentPage-1)*PAGE_SIZE,pageRows=filtered.slice(pageStart,pageStart+PAGE_SIZE);
       const reelLabel=reelFilters.find(option=>option.key===activeReelFilter)?.label||"전체";
       $("topCount").textContent=dataReady?restaurants.length:"불러오는 중";$("topCountUnit").textContent=dataReady?"곳":"";$("resultCount").textContent=dataReady?filtered.length+"곳":loadingError?"불러오지 못했어요":"맛집 불러오는 중…";$("mapCount").textContent=dataReady?(activeReelFilter==="all"?"":reelLabel+" · ")+(mapCategory==="전체"?"전체":mapCategory)+" · "+mapFiltered.length+"곳 표시 중":"맛집 불러오는 중…";$("sectionTitle").textContent=activeView==="saved"?"내가 저장한 맛집":activeSort==="nearby"?"내 주변 맛집":activeSort==="route"?"길찾기 인기 맛집":activeReelFilter!=="all"?reelLabel:activeCategory==="전체"?"서울 맛집":activeCategory+" 맛집";
-      const routeClicks=filtered.reduce((total,x)=>total+Number(x.route_clicks_7d||0),0),reelNotes={rising:"최근 수집된 조회수 증가 속도가 빠른 순",first3:"게시 후 3일 이내 릴스 중 조회수 상승이 큰 순",days4to5:"게시 후 4~5일 릴스 중 조회수 상승이 큰 순",million:"현재 조회수 100만 이상인 릴스"};$("sortNote").textContent=activeSort==="route"?(routeClicks>0?"최근 7일간 가장 많은 길찾기 클릭 순":"길찾기 기록이 충분하지 않아요. 기록이 쌓이면 인기순으로 보여드릴게요."):activeSort==="nearby"?"현재 위치에서 가까운 순":reelNotes[activeReelFilter]||"";$("sortNote").classList.toggle("hidden",(activeSort==="default"&&activeReelFilter==="all")||activeView==="saved");
+      const routeClicks=filtered.reduce((total,x)=>total+Number(x.route_clicks_7d||0),0);$("sortNote").textContent=activeSort==="route"?(routeClicks>0?"최근 7일간 가장 많은 길찾기 클릭 순":"길찾기 기록이 충분하지 않아요. 기록이 쌓이면 인기순으로 보여드릴게요."):activeSort==="nearby"?"현재 위치에서 가까운 순":activeReelFilter==="million"?"현재 조회수 100만 이상인 릴스":"";$("sortNote").classList.toggle("hidden",(activeSort==="default"&&activeReelFilter==="all")||activeView==="saved");
       if(activeId&&!filtered.some(x=>String(x.id)===String(activeId))){activeId=null;$("placeSheet").classList.add("hidden")}
       const filterCount=key=>restaurants.filter(x=>matchesReelFilter(x,key)).length;
       $("sortFilters").innerHTML=sortOptions.map(option=>`<button class="chip sort ${activeSort===option.key?"on":""}" data-sort="${option.key}">${option.label}</button>`).join("");
@@ -327,7 +324,7 @@
         if(["list","map","saved","register"].includes(state.view))activeView=state.view;
         if(["전체",...Object.keys(categoryClasses)].includes(state.category))activeCategory=state.category;
         if(["전체",...Object.keys(categoryClasses)].includes(state.mapCategory))mapCategory=state.mapCategory;
-        if(["all","rising","first3","days4to5","million"].includes(state.reelFilter))activeReelFilter=state.reelFilter;
+        if(["all","million"].includes(state.reelFilter))activeReelFilter=state.reelFilter;
         if(["default","nearby","route"].includes(state.sort))activeSort=state.sort;
         const savedPage=Math.max(1,Number(state.page)||1);currentPage=savedPage;activeId=state.activeId||null;
         $("searchInput").value=String(state.search||"").slice(0,200);
