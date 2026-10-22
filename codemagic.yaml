@@ -1,0 +1,35 @@
+workflows:
+  ios-testflight:
+    name: ReelsMap iOS TestFlight
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: reelsmap-apple
+    environment:
+      node: 22
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.myreelsmap.app
+      vars:
+        XCODE_WORKSPACE: App.xcodeproj/project.xcworkspace
+        XCODE_SCHEME: App
+    scripts:
+      - name: Install dependencies and update iOS project
+        script: |
+          cd app
+          npm ci
+          npm run ios:sync
+      - name: Apply Apple signing profiles
+        script: |
+          cd app/ios/App
+          xcode-project use-profiles
+      - name: Build signed iOS app
+        script: |
+          cd app/ios/App
+          xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+    artifacts:
+      - app/ios/App/build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+    publishing:
+      app_store_connect:
+        auth: integration
