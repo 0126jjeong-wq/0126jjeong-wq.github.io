@@ -27,6 +27,6 @@ Codemagic에서 macOS 빌드와 업로드를 대신하므로 사용자 소유 Ma
 - 앱과 Safari 미리보기의 지도 바탕은 임시로 OpenStreetMap을 쓴다. 운영 홈페이지는 카카오맵 그대로다. 카카오 JavaScript SDK가 iOS 로컬 주소에서 작동하지 않아, 기기 테스트 전에 지도 기능을 볼 수 있게 한 조치다. 앱의 카카오맵 적용은 iOS SDK 연결 작업이 필요하다.
 - App Store 식별자 `com.myreelsmap.app`은 개발용 초안이다. Apple Developer 계정의 사용 가능 여부 확인 후 확정한다.
 - 저장 목록은 현재 기기 내부 저장소에 남는다. 기존 Safari 저장 목록이 앱에 자동 이전되거나 다른 기기와 동기화되지는 않는다.
-- Google·카카오 웹 로그인은 운영 웹에 유지되어 있다. iOS 네이티브 로그인은 앱 복귀용 URL Scheme/Universal Link와 Supabase Redirect URL을 함께 설정한 뒤 추가한다.
+- Google·카카오 웹 로그인은 운영 웹에 유지되어 있다. iOS 앱에는 Google 로그인 화면과 앱 복귀 코드가 들어 있다. 실제 로그인 전에 Supabase Authentication → URL Configuration의 Redirect URLs에 `com.myreelsmap.app://auth/callback`을 추가해야 한다. 카카오는 개발자 키와 Supabase Provider 설정 확인 전까지 앱에서 `준비 중`으로 비활성화했다.
 - 관리자 도구는 앱에 넣지 않았다. 운영 관리자 페이지에서 데이터를 관리한다.
-- iOS 빌드 및 TestFlight 배포는 Mac, Xcode, Apple 서명 계정이 준비된 뒤 수행한다.
+- iOS 빌드 및 TestFlight 배포는 Codemagic의 클라우드 Mac과 Apple 개발자 서명 계정이 준비된 뒤 수행한다. 사용자 소유 Mac이나 Xcode 설치는 필요하지 않다.
