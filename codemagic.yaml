@@ -1,4 +1,31 @@
 workflows:
+  ios-compile-check:
+    name: ReelsMap iOS compile check
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      node: 22
+      xcode: latest
+    scripts:
+      - name: Install dependencies and prepare iOS project
+        script: |
+          cd app
+          npm ci
+          npm run ios:sync
+      - name: Compile without Apple signing
+        script: |
+          cd app/ios/App
+          xcodebuild \
+            -project App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "$CM_BUILD_DIR/app/ios/DerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+    artifacts:
+      - app/ios/DerivedData/Build/Products/Debug-iphonesimulator/*.app
+      - /tmp/xcodebuild_logs/*.log
   ios-testflight:
     name: ReelsMap iOS TestFlight
     max_build_duration: 120

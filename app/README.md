@@ -13,12 +13,12 @@ Xcode가 설치된 Mac에서 프로젝트를 열고 서명 팀을 선택한 뒤 
 
 ## Mac 없이 iPhone에서 시험하기
 
-저장소 루트의 `codemagic.yaml`은 Codemagic의 클라우드 Mac에서 iOS 앱을 빌드해 App Store Connect에 업로드하는 설정이다. 아이패드 Safari에서도 [Codemagic](https://codemagic.io/start/)과 [App Store Connect](https://appstoreconnect.apple.com/)를 설정할 수 있다.
+저장소 루트의 `codemagic.yaml`에는 서명 없이 컴파일만 검사하는 `ios-compile-check`와 App Store Connect에 올리는 `ios-testflight`가 있다. 아이패드 Safari에서도 [Codemagic](https://codemagic.io/start/)과 [App Store Connect](https://appstoreconnect.apple.com/)를 설정할 수 있다.
 
-1. Apple Developer Program에 등록하고 App Store Connect에 번들 ID `com.myreelsmap.app`의 앱 기록을 만든다. Apple Developer에서 이 ID의 App Store 배포용 서명을 준비한다.
-2. Codemagic에서 GitHub 저장소 `0126jjeong-wq/0126jjeong-wq.github.io`를 추가한다. Team integrations → Developer Portal에 App Store Connect API 키를 `reelsmap-apple` 이름으로 연결한다. 키와 비밀번호는 채팅이나 저장소에 올리지 않는다.
-3. 해당 ID의 App Store 배포 인증서와 프로비저닝 프로필을 Codemagic의 Code signing identities에 연결한다. `main` 브랜치의 `ios-testflight` 워크플로를 실행한다.
-4. 성공하면 App Store Connect의 TestFlight에서 빌드를 확인해 내부 테스터에게 배포한다. 앱 심사용 정보와 개인정보 항목은 실제 기능에 맞게 입력한다.
+1. Codemagic에서 GitHub 저장소 `0126jjeong-wq/0126jjeong-wq.github.io`를 추가한다. `Start new build`에서 `main` 브랜치와 `ios-compile-check`를 선택한다. 이 빌드는 Apple 서명 없이 컴파일만 검사하며 결과물은 아이폰에 설치할 수 없다.
+2. 실제 아이폰 테스트를 진행할 때 Apple Developer Program에 등록하고 App Store Connect에 번들 ID `com.myreelsmap.app`의 앱 기록을 만든다. Apple Developer에서 이 ID의 App Store 배포용 서명을 준비한다.
+3. Team integrations → Developer Portal에 App Store Connect API 키를 `reelsmap-apple` 이름으로 연결한다. 키와 비밀번호는 채팅이나 저장소에 올리지 않는다. 해당 ID의 App Store 배포 인증서와 프로비저닝 프로필을 Codemagic의 Code signing identities에 연결한다.
+4. `main` 브랜치의 `ios-testflight` 워크플로를 실행한다. 성공하면 App Store Connect의 TestFlight에서 빌드를 확인해 내부 테스터에게 배포한다. 앱 심사용 정보와 개인정보 항목은 실제 기능에 맞게 입력한다.
 
 Codemagic에서 macOS 빌드와 업로드를 대신하므로 사용자 소유 Mac은 필요하지 않다. `codemagic.yaml`은 아직 클라우드에서 실제 빌드를 실행하지 못했으므로 첫 빌드 로그를 확인해야 한다. 앱의 로그인 복귀 경로와 실제 iPhone 지도 동작은 TestFlight 배포 전 검증할 항목이다.
 
