@@ -322,7 +322,7 @@
       return false;
     }
     async function loadMemberSaves(){const state=await memberLibrary.load();if(!state)return;saved.clear();state.saved.forEach(id=>saved.add(id));applyFilters();}
-    async function activateLibrary(session){if(!currentProfile||!session?.user)return;const id=session.user.id;memberLibrary.setOwner(id);try{await loadMemberSaves();if(memberLibrary.owner!==id)return;let intent;try{intent=JSON.parse(sessionStorage.getItem(SAVE_INTENT)||"null");sessionStorage.removeItem(SAVE_INTENT)}catch{}if(intent&&Date.now()-intent.at<600000){if(intent.type==="save")await toggleSave(intent.id);if(intent.type==="saved")setView("saved");}}catch{toast("저장 목록을 불러오지 못했어요. 다시 시도해 주세요.");}}
+    async function activateLibrary(session){if(!currentProfile||!session?.user)return;const id=session.user.id;memberLibrary.setOwner(id);try{await loadMemberSaves();if(memberLibrary.owner!==id)return;let intent;try{intent=JSON.parse(sessionStorage.getItem(SAVE_INTENT)||"null");sessionStorage.removeItem(SAVE_INTENT)}catch{}if(intent&&Date.now()-intent.at<600000){if(intent.type==="save"&&!saved.has(String(intent.id)))await toggleSave(intent.id);if(intent.type==="saved")setView("saved");}}catch{toast("저장 목록을 불러오지 못했어요. 다시 시도해 주세요.");}}
     async function toggleSave(id){
       id=String(id);if(!requireMember({type:"save",id})||libraryBusy)return;libraryBusy=true;const owner=memberLibrary.owner;
       try{const removing=saved.has(id);if(removing)await memberLibrary.removeRestaurant(id);else await memberLibrary.saveRestaurant(id);await loadMemberSaves();if(owner===memberLibrary.owner)toast(removing?"저장을 취소했어요":"맛집을 저장했어요");}

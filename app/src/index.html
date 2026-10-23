@@ -320,7 +320,7 @@
     }
     function isSavedPlace(id){return saved.has(String(id))||personalLinks.some(r=>String(r.place.id)===String(id))}
     async function toggleSave(id){
-      if(!requireMember(()=>toggleSave(id)))return;
+      if(!requireMember(()=>{if(!isSavedPlace(id))return toggleSave(id);toast("이미 저장한 맛집이에요");}))return;
       if(libraryBusy)return;libraryBusy=true;const owner=memberLibrary.owner;
       try{const removing=isSavedPlace(id);if(removing)await memberLibrary.removeRestaurant(String(id));else await memberLibrary.saveRestaurant(String(id));await reloadLibrary();if(owner===memberLibrary.owner)toast(removing?"저장을 취소했어요":"맛집을 저장했어요");}
       catch{toast("저장하지 못했어요. 연결 상태를 확인하고 다시 시도해 주세요.");await reloadLibrary().catch(()=>{});}finally{libraryBusy=false;}
@@ -331,7 +331,8 @@
     function pendingReels(){return libraryReels.map(r=>r.url);}
     async function addPastedReel(url){
       if(!requireMember(()=>addPastedReel(url)))return;
-      try{await memberLibrary.saveReel(url);await reloadLibrary();$("pasteReelMessage").textContent="";$("pasteReelForm").reset();openConnection(url);}
+      const owner=memberLibrary.owner;
+      try{await memberLibrary.saveReel(url);if(memberLibrary.owner!==owner)return;await reloadLibrary();if(memberLibrary.owner!==owner)return;$("pasteReelMessage").textContent="";$("pasteReelForm").reset();openConnection(url);}
       catch{$("pasteReelMessage").textContent="보관하지 못했어요. 연결 상태를 확인해 주세요.";}
     }
     $("pasteReelForm").addEventListener("submit",event=>{
