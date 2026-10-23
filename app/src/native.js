@@ -5,6 +5,9 @@ import { Share } from '@capacitor/share';
 import { App } from '@capacitor/app';
 import { createClient } from '@supabase/supabase-js';
 
+import * as ReelsLinks from './shared-reels.js';
+window.ReelsLinks = ReelsLinks;
+
 const native = Capacitor.isNativePlatform();
 const redirectTo = 'com.myreelsmap.app://auth/callback';
 const client = createClient('https://tbyfoxsyadmpeeatyzvm.supabase.co', 'sb_publishable_988pI6RSLYvNDIUEZ1sc3w_ZLlwcRh_', {

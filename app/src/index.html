@@ -54,7 +54,7 @@
 </head>
 <body data-view="list">
   <header class="topbar">
-    <a class="brand" href="./" aria-label="릴스맛집지도 홈"><span class="brand-mark">🍜</span><span class="brand-name">릴스맛집지도</span></a>
+    <a class="brand" href="./" aria-label="릴스맛집지도 홈"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" width="27" height="27" role="img" aria-label="릴스 맛집 지도"><path fill="#fff" d="M32 3.5C17.1 3.5 5 15.6 5 30.5c0 18.3 27 32.8 27 32.8s27-14.5 27-32.8C59 15.6 46.9 3.5 32 3.5Z"/><circle cx="32" cy="28" r="11.5" fill="#ff4d2e"/><path fill="#fff" d="M29 21.8c-.7-.4-1.6.1-1.6 1v10.4c0 .9.9 1.4 1.6 1l8.4-5.2c.7-.4.7-1.5 0-1.9l-8.4-5.3Z"/></svg></span><span class="brand-name">릴스맛집지도</span></a>
     <div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="가게명, 동네, 음식으로 검색" aria-label="맛집 검색"></div>
     <div class="top-count">서울 맛집 <b id="topCount">불러오는 중</b></div>
     <div class="account-area"><button id="accountNickname" class="account-nickname hidden" type="button" aria-label="회원 정보 수정"></button><button id="openLogin" class="account-button" type="button">로그인</button></div>
@@ -73,6 +73,7 @@
           <div class="eyebrow">REELS MAP · REQUEST</div>
           <h2>등록·수정</h2>
           <p>크리에이터와 업주가 직접 릴스와 매장 정보를 등록하거나 수정할 수 있어요.</p>
+          <form id="pasteReelForm" class="profile-form"><label for="pasteReelInput">릴스 링크로 저장<input id="pasteReelInput" type="text" inputmode="url" maxlength="4000" placeholder="인스타에서 복사한 릴스 링크를 붙여넣으세요" required></label><button type="submit" class="profile-save">링크 확인하고 가게 연결</button><p id="pasteReelMessage" role="status"></p></form>
           <section id="sharedReelsPanel" class="hidden" aria-live="polite"><h3>공유받은 릴스</h3><p>인스타에서 공유한 링크를 이 기기에 보관합니다. 가게를 연결하면 내 지도와 저장 탭에서 볼 수 있어요.</p><div id="sharedReelsList"></div></section>
           <div class="stakeholder-links">
             <a href="./policy.html#creator-submit">크리에이터 · 내 릴스 등록 <span>→</span></a>
@@ -328,9 +329,19 @@
     let personalLinks = [];
     try { const rows = JSON.parse(localStorage.getItem(PERSONAL_KEY) || "[]"); if (Array.isArray(rows)) personalLinks = rows.filter(r => r && typeof r.url === "string" && r.place?.id && r.place?.name && Number.isFinite(r.place.latitude) && Number.isFinite(r.place.longitude)); } catch {}
     let ownMap = false, connectingUrl = null, picker = null, pickerMarker = null, pickedPoint = null;
-    function canonicalReel(raw) {
-      try { const u = new URL(raw), parts = u.pathname.split("/").filter(Boolean); return u.protocol === "https:" && ["instagram.com","www.instagram.com","m.instagram.com"].includes(u.hostname) && ["reel","reels","p"].includes(parts[0]) && /^[A-Za-z0-9_-]+$/.test(parts[1] || "") ? `https://www.instagram.com/${parts[0] === "reels" ? "reel" : parts[0]}/${parts[1]}/` : null; } catch { return null; }
+    const canonicalReel = window.ReelsLinks.canonicalReel;
+    const PENDING_KEY = "reelsmap_pending_reels_v1";
+    function pendingReels() {
+      try { const rows=JSON.parse(localStorage.getItem(PENDING_KEY)||"[]"); return Array.isArray(rows)?[...new Set(rows.map(canonicalReel).filter(Boolean))]:[]; } catch { return []; }
     }
+    $("pasteReelForm").addEventListener("submit", async event => {
+      event.preventDefault();
+      const urls=window.ReelsLinks.extractReels($("pasteReelInput").value);
+      if(urls.length!==1){$("pasteReelMessage").textContent=urls.length?"릴스 링크를 한 개씩 붙여넣어 주세요.":"Instagram 릴스 또는 게시물의 전체 링크를 붙여넣어 주세요.";return;}
+      try{localStorage.setItem(PENDING_KEY,JSON.stringify([...new Set([...pendingReels(),urls[0]])]));}
+      catch{$("pasteReelMessage").textContent="저장 공간을 확인해 주세요.";return;}
+      $("pasteReelMessage").textContent="";$("pasteReelForm").reset();await refreshSharedReels();openConnection(urls[0]);
+    });
     function personalRestaurants() {
       const places = new Map(restaurants.filter(x => isSavedPlace(x.id)).map(x => [String(x.id), {...x, reels: [...x.reels]}]));
       for (const entry of personalLinks) {
@@ -355,8 +366,10 @@
     }
     function showPlaceMatches() {
       const q=$("placeMatchSearch").value.trim().toLowerCase(), target=$("placeMatchResults"); target.replaceChildren();
-      if (!q) { target.textContent="가게명을 입력하면 기존 맛집에서 찾을 수 있어요."; return; }
-      const matches=restaurants.filter(x => `${x.name} ${x.address}`.toLowerCase().includes(q)).slice(0,15);
+      const linked=personalLinks.find(entry=>entry.url===canonicalReel(connectingUrl));
+      const matches=q?restaurants.filter(x => `${x.name} ${x.address}`.toLowerCase().includes(q)).slice(0,15):window.ReelsLinks.matchPlaces(connectingUrl,restaurants);
+      if(!q&&!matches.length){target.textContent=linked?`현재 연결: ${linked.place.name}. 바꿀 가게명을 검색해 주세요.`:dataReady?"가게명을 입력하면 기존 맛집에서 찾을 수 있어요.":"맛집 목록을 불러오는 중이에요. 잠시 후 가게명을 검색해 주세요.";return;}
+      if(!q&&matches.length){const note=document.createElement("p");note.textContent="이 릴스에 등록된 가게예요. 눌러서 내 지도에 저장하세요.";target.append(note);}
       if (!matches.length) target.textContent="등록된 가게가 없어요. 아래에서 직접 추가할 수 있어요.";
       for (const place of matches) { const button=document.createElement("button"); button.type="button"; button.className="auth-button"; button.textContent=`${place.name} · ${place.address || "주소 없음"}`; button.addEventListener("click",()=>storeConnection(place)); target.append(button); }
     }
@@ -377,7 +390,7 @@
     let inboxSignature = "";
     async function refreshSharedReels() {
       try {
-        const urls = [...new Set([...(window.ReelsInbox?.enabled ? await window.ReelsInbox.list() : []), ...personalLinks.map(r=>r.url)].map(canonicalReel).filter(Boolean))];
+        const urls = [...new Set([...(window.ReelsInbox?.enabled ? await window.ReelsInbox.list() : []), ...pendingReels(), ...personalLinks.map(r=>r.url)].map(canonicalReel).filter(Boolean))];
         const signature = JSON.stringify(urls);
         $("sharedReelsPanel").classList.toggle("hidden", !urls.length);
         $("sharedReelsList").replaceChildren();
@@ -388,7 +401,7 @@
           link.href=url;link.textContent="Instagram에서 릴스 확인 ↗";
           connect.type="button";connect.className="auth-button";connect.textContent=entry?`${entry.place.name} · 연결 변경`:"가게 연결하고 내 지도에 저장";connect.addEventListener("click",()=>openConnection(url));
           remove.type="button";remove.textContent="릴스 보관 취소";
-          remove.addEventListener("click",async()=>{try{if(window.ReelsInbox?.enabled)await window.ReelsInbox.remove(url);const next=personalLinks.filter(r=>r.url!==url);localStorage.setItem(PERSONAL_KEY,JSON.stringify(next));personalLinks=next;await refreshSharedReels();applyFilters();}catch{toast("보관을 취소하지 못했어요");}});
+          remove.addEventListener("click",async()=>{try{if(window.ReelsInbox?.enabled)await window.ReelsInbox.remove(url);localStorage.setItem(PENDING_KEY,JSON.stringify(pendingReels().filter(r=>r!==url)));const next=personalLinks.filter(r=>r.url!==url);localStorage.setItem(PERSONAL_KEY,JSON.stringify(next));personalLinks=next;await refreshSharedReels();applyFilters();}catch{toast("보관을 취소하지 못했어요");}});
           row.append(link,connect,remove);$("sharedReelsList").append(row);
         }
         if(urls.some(url=>!personalLinks.some(r=>r.url===url)) && signature!==inboxSignature){setView("register");toast("공유받은 릴스를 가게와 연결해 주세요");}
@@ -421,7 +434,7 @@
     $("accountNickname").addEventListener("click",()=>{if(currentProfile)openProfileEditor(currentProfile)});
     $("googleLogin").addEventListener("click",()=>startSocialLogin("google"));$("kakaoLogin").addEventListener("click",()=>startSocialLogin("kakao"));$("closeLogin").addEventListener("click",()=>$("loginDialog").close());
     $("profileForm").addEventListener("submit",saveMemberProfile);$("profileLogout").addEventListener("click",async()=>{const{error}=await authClient.auth.signOut();if(error)toast("로그아웃하지 못했어요");else toast("로그아웃했어요")});$("profileDialog").addEventListener("cancel",event=>{if(!currentProfile)event.preventDefault()});
-    async function load(refresh=false){try{const r=await fetch(API+"?t="+Date.now());if(!r.ok)throw new Error(`HTTP ${r.status}`);const j=await r.json();if(!j.ok||!Array.isArray(j.restaurants))throw new Error("Invalid site data");restaurants=groupRestaurants(j.restaurants);dataReady=true;loadingError=false;updateDistances();applyFilters()}catch(error){console.error("Restaurant data load failed",error);if(!refresh&&!dataReady){loadingError=true;applyFilters()}}}
+    async function load(refresh=false){try{const r=await fetch(API+"?t="+Date.now());if(!r.ok)throw new Error(`HTTP ${r.status}`);const j=await r.json();if(!j.ok||!Array.isArray(j.restaurants))throw new Error("Invalid site data");restaurants=groupRestaurants(j.restaurants);dataReady=true;loadingError=false;updateDistances();applyFilters();if($("connectReelDialog").open)showPlaceMatches()}catch(error){console.error("Restaurant data load failed",error);if(!refresh&&!dataReady){loadingError=true;applyFilters()}}}
     window.addEventListener("resize",()=>{if(mapReady){map.relayout();fitMapToMarkers()}});applyFilters();initSocialAuth().then(()=>trackEngagement(null,"visit"));loadKakaoMap();load();setInterval(()=>load(true),300000);
   </script>
 </body>
