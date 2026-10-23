@@ -71,6 +71,7 @@
           <div class="eyebrow">REELS MAP · REQUEST</div>
           <h2>등록·수정</h2>
           <p>크리에이터와 업주가 직접 릴스와 매장 정보를 등록하거나 수정할 수 있어요.</p>
+          <section id="sharedReelsPanel" class="hidden" aria-live="polite"><h3>공유받은 릴스</h3><p>인스타에서 공유한 링크를 이 기기에 보관합니다. 링크를 열어 매장 정보를 확인할 수 있어요.</p><div id="sharedReelsList"></div></section>
           <div class="stakeholder-links">
             <a href="./policy.html#creator-submit">크리에이터 · 내 릴스 등록 <span>→</span></a>
             <a href="./policy.html?role=creator&type=removal#request">콘텐츠 수정·삭제 <span>→</span></a>
@@ -312,6 +313,31 @@
       if(openMap&&window.innerWidth<=760)setView("map");setTimeout(()=>focusRestaurant(id),openMap&&window.innerWidth<=760?140:0);
     }
     function toggleSave(id){id=String(id);saved.has(id)?saved.delete(id):saved.add(id);try{localStorage.setItem("reelsmap_saved",JSON.stringify([...saved]))}catch{}toast(saved.has(id)?"맛집을 저장했어요":"저장을 취소했어요");applyFilters()}
+    let inboxSignature = "";
+    async function refreshSharedReels() {
+      if (!window.ReelsInbox?.enabled) return;
+      try {
+        const urls = await window.ReelsInbox.list();
+        const signature = JSON.stringify(urls);
+        $("sharedReelsPanel").classList.toggle("hidden", !urls.length);
+        $("sharedReelsList").replaceChildren();
+        for (const url of urls) {
+          const row = document.createElement("p"), link = document.createElement("a"), remove = document.createElement("button");
+          link.href = url; link.textContent = "Instagram에서 릴스 확인 ↗";
+          remove.type = "button"; remove.textContent = "보관함에서 삭제";
+          remove.style.marginLeft = "12px";
+          remove.addEventListener("click", async () => {
+            try { await window.ReelsInbox.remove(url); await refreshSharedReels(); }
+            catch { toast("삭제하지 못했어요. 다시 시도해 주세요."); }
+          });
+          row.append(link, remove); $("sharedReelsList").append(row);
+        }
+        if (urls.length && signature !== inboxSignature) { setView("register"); toast("공유받은 릴스를 확인해 주세요"); }
+        inboxSignature = signature;
+      } catch { toast("공유받은 릴스를 불러오지 못했어요"); }
+    }
+    window.addEventListener("reelsmap:shared-reels", refreshSharedReels);
+    refreshSharedReels();
     const authClient=window.ReelsAuth.client;
     let currentProfile=null,profileLoadUser=null,profileSaving=false,authBusy=false;
     function showAccount(session){const loggedIn=!!session?.user;$("openLogin").textContent=loggedIn?"로그아웃":"로그인";$("accountNickname").textContent=currentProfile?.nickname||"";$("accountNickname").classList.toggle("hidden",!loggedIn||!currentProfile?.nickname)}

@@ -1,4 +1,4 @@
-import { Capacitor } from '@capacitor/core';
+import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Geolocation } from '@capacitor/geolocation';
 import { Browser } from '@capacitor/browser';
 import { Share } from '@capacitor/share';
@@ -72,3 +72,15 @@ window.ReelsNative = {
   },
   async share(data) { await Share.share(data); }
 };
+
+const SharedReels = registerPlugin('SharedReels');
+window.ReelsInbox = {
+  enabled: native,
+  async list() { return native ? (await SharedReels.list()).urls : []; },
+  async remove(url) { if (native) await SharedReels.remove({ url }); }
+};
+if (native) {
+  App.addListener('appStateChange', ({ isActive }) => {
+    if (isActive) window.dispatchEvent(new Event('reelsmap:shared-reels'));
+  });
+}

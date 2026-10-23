@@ -30,3 +30,12 @@ Codemagic에서 macOS 빌드와 업로드를 대신하므로 사용자 소유 Ma
 - Google·카카오 웹 로그인은 운영 웹에 유지되어 있다. iOS 앱에는 Google 로그인 화면과 앱 복귀 코드가 들어 있다. 실제 로그인 전에 Supabase Authentication → URL Configuration의 Redirect URLs에 `com.myreelsmap.app://auth/callback`을 추가해야 한다. 카카오는 개발자 키와 Supabase Provider 설정 확인 전까지 앱에서 `준비 중`으로 비활성화했다.
 - 관리자 도구는 앱에 넣지 않았다. 운영 관리자 페이지에서 데이터를 관리한다.
 - iOS 빌드 및 TestFlight 배포는 Codemagic의 클라우드 Mac과 Apple 개발자 서명 계정이 준비된 뒤 수행한다. 사용자 소유 Mac이나 Xcode 설치는 필요하지 않다.
+
+## Instagram에서 공유받기
+
+- iOS 공유 시트에 `릴스맛집지도` Share Extension을 추가했다. Instagram에서 `공유 → 더 보기 → 릴스맛집지도 → 릴스 보관`을 선택한다.
+- 링크는 App Group `group.com.myreelsmap.app`의 기기 보관함에 저장된다. 앱을 열거나 다시 활성화하면 등록·수정 탭의 `공유받은 릴스`에서 확인·삭제할 수 있다. 같은 링크의 추적 쿼리는 제거하고 중복을 막는다.
+- 공유 확장은 본 앱을 강제로 여는 비공식 우회 API를 사용하지 않는다. 보관 후 사용자가 본 앱을 열어야 한다.
+- 이 단계는 URL 수신이다. 가게명·주소·조회수 자동 수집이나 공개 지도 등록은 아직 연결하지 않았다. 보관함은 회원 계정별이 아닌 해당 기기의 공용 로컬 보관함이다.
+- Apple Developer에서 본 앱 `com.myreelsmap.app`와 확장 `com.myreelsmap.app.ShareExtension` 양쪽에 동일한 App Group을 활성화하고 두 App ID용 프로필을 준비해야 실제 기기에서 공유 보관이 동작한다. Codemagic의 서명 설정도 두 프로필을 포함해야 한다.
+- 검증: JS 빌드와 Capacitor sync, Xcode 프로젝트 파싱, plist 검사를 로컬에서 수행했다. Xcode 컴파일 및 Instagram 실기기 공유 테스트는 아직 필요하다.
