@@ -4,7 +4,8 @@ import UniformTypeIdentifiers
 // The extension stores links locally; the containing app imports them on its next activation.
 final class ShareViewController: UIViewController {
     private let group = "group.com.myreelsmap.app"
-    private let key = "sharedReels"
+    private var memberId: String?
+    private var key: String { "sharedReels." + (memberId ?? "") }
     private let message = UILabel()
     private let save = UIButton(type: .system)
     private var links: [String] = []
@@ -33,6 +34,12 @@ final class ShareViewController: UIViewController {
             stack.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor, constant: -24),
             stack.centerYAnchor.constraint(equalTo: view.safeAreaLayoutGuide.centerYAnchor)
         ])
+        let defaults = UserDefaults(suiteName: group)
+        memberId = defaults?.string(forKey: "memberId")
+        guard memberId != nil, (defaults?.double(forKey: "memberUntil") ?? 0) > Date().timeIntervalSince1970 else {
+            message.text = "릴스 보관은 회원 전용이에요. 릴스맛집지도 앱에서 회원가입·로그인한 뒤 다시 공유해 주세요."
+            return
+        }
         readItems()
     }
 
@@ -81,6 +88,12 @@ final class ShareViewController: UIViewController {
         guard let defaults = UserDefaults(suiteName: group),
               FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: group) != nil else {
             message.text = "공유 저장 공간을 사용할 수 없어요. 앱 설정을 확인해 주세요."
+            return
+        }
+        guard let id = memberId, defaults.string(forKey: "memberId") == id,
+              defaults.double(forKey: "memberUntil") > Date().timeIntervalSince1970 else {
+            save.isEnabled = false
+            message.text = "릴스맛집지도 앱에서 다시 로그인한 뒤 공유해 주세요."
             return
         }
         var existing = defaults.stringArray(forKey: key) ?? []

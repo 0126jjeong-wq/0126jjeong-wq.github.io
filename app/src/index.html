@@ -112,7 +112,7 @@
   <div id="toast" class="toast"></div>
   <dialog id="locationHelp"><div class="location-help"><h2>위치 권한을 켜주세요</h2><p id="locationHelpReason">현재 위치를 확인하지 못했습니다.</p><ol><li>아이폰·아이패드: 설정 → 릴스맛집지도 → 위치 → 앱을 사용하는 동안 허용</li><li>설정을 바꾼 뒤 앱으로 돌아와 현위치 버튼을 다시 눌러주세요.</li></ol><button type="button" data-location-close>확인</button></div></dialog>
   <dialog id="connectReelDialog"><div class="location-help"><h2>릴스를 내 지도에 저장</h2><p id="connectReelSource"></p><label for="placeMatchSearch">가게명·주소 검색</label><input id="placeMatchSearch" type="search" placeholder="예: 을지로 가게명"><div id="placeMatchResults"></div><details><summary>목록에 없는 가게 직접 추가</summary><form id="privatePlaceForm" class="profile-form"><label>가게명<input id="privatePlaceName" maxlength="120" required></label><label>주소<input id="privatePlaceAddress" maxlength="250" required></label><label>카테고리<select id="privatePlaceCategory"><option>식사</option><option>일식</option><option>양식</option><option>카페·디저트</option><option>술집</option></select></label><p>지도를 움직여 가게 위치를 찾은 뒤 해당 지점을 눌러주세요.</p><div id="privatePlaceMap" style="height:260px;border-radius:12px" aria-label="내 가게 위치 선택 지도"></div><p id="privatePlaceLocation" role="status">아직 위치를 선택하지 않았어요</p><button type="submit" class="profile-save">내 지도에 저장</button></form></details><p id="connectReelMessage" role="status"></p><button id="closeConnectReel" type="button" class="auth-button">닫기</button></div></dialog>
-  <dialog id="loginDialog"><div class="location-help"><h2>로그인</h2><p>Google은 웹과 같은 계정을 사용해요. 카카오는 연결 설정 후 사용할 수 있어요.</p><div class="auth-entry"><button id="googleLogin" class="auth-button google" type="button">Google로 계속하기</button><button id="kakaoLogin" class="auth-button kakao" type="button" disabled aria-describedby="kakaoLoginNote">카카오 로그인 · 준비 중</button><p id="kakaoLoginNote">카카오 개발자 키와 Supabase 설정을 확인 중이에요.</p><p id="authMessage" class="auth-error" role="status"></p><button id="closeLogin" class="auth-button" type="button">닫기</button></div></div></dialog>
+  <dialog id="loginDialog"><div class="location-help"><h2>회원가입 · 로그인</h2><p>맛집과 릴스를 내 계정에 저장하세요. 처음 로그인하면 회원정보 입력 후 가입이 완료돼요.</p><div class="auth-entry"><button id="googleLogin" class="auth-button google" type="button">Google로 계속하기</button><button id="kakaoLogin" class="auth-button kakao" type="button" disabled aria-describedby="kakaoLoginNote">카카오 로그인 · 준비 중</button><p id="kakaoLoginNote">카카오 개발자 키와 Supabase 설정을 확인 중이에요.</p><p id="authMessage" class="auth-error" role="status"></p><button id="closeLogin" class="auth-button" type="button">닫기</button></div></div></dialog>
   <dialog id="profileDialog"><div class="location-help"><h2 id="profileTitle">회원 정보 입력</h2><p id="profileIntro">가입을 마치려면 아래 정보를 입력해 주세요.</p><form id="profileForm" class="profile-form"><label for="profileFullName">이름<input id="profileFullName" autocomplete="name" maxlength="80" required></label><label for="profilePhone">전화번호<input id="profilePhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" placeholder="010-1234-5678" required></label><label for="profileBirthDate">생일<input id="profileBirthDate" type="date" autocomplete="bday" min="1900-01-01" required></label><label for="profileNickname">닉네임<input id="profileNickname" autocomplete="nickname" minlength="2" maxlength="16" pattern="[가-힣A-Za-z0-9_-]{2,16}" placeholder="2~16자, 한글·영문·숫자" required></label><label class="profile-consent"><input id="profileConsent" type="checkbox" required><span>이름·전화번호·생일·닉네임을 회원정보 관리 및 서비스 개선 목적으로 수집·이용하는 데 동의합니다. <a href="./policy.html#privacy" target="_blank" rel="noopener">개인정보처리방침</a></span></label><label class="profile-consent"><input id="visitTrackingConsent" type="checkbox"><span>선택 동의: 앱 방문 횟수를 내 계정과 연결해 기록합니다. 관리자만 기간별 통계로 확인할 수 있습니다.</span></label><p id="profileMessage" class="auth-error" role="status"></p><button id="profileSave" class="profile-save" type="submit">저장하고 계속하기</button><button id="profileLogout" class="auth-button" type="button">로그아웃</button></form></div></dialog>
   <script src="./vendor/leaflet.js"></script>
   <script src="./map-fallback.js"></script>
@@ -136,7 +136,7 @@
     const reelFilters=[{key:"million",label:"릴스 조회수 100만+"}];
     let restaurants=[],filtered=[],mapFiltered=[],activeCategory="전체",mapCategory="전체",activeReelFilter="",activeSort="default",activeView="list",activeId=null,userLocation=null,locationState="idle",currentPage=1;
     let map=null,mapReady=false,locationOverlay=null,markerOverlays=[];
-    let savedEntries=[];try{savedEntries=JSON.parse(localStorage.getItem("reelsmap_saved")||"[]")}catch{}const saved=new Set(Array.isArray(savedEntries)?savedEntries.map(String):[]);
+    const saved=new Set();
     let dataReady=false,loadingError=false;
     const VISITOR_KEY="reelsmap_visitor_v1";
     const createVisitorId=()=>globalThis.crypto?.randomUUID?.()||`${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}_${Math.random().toString(36).slice(2)}`;
@@ -319,28 +319,25 @@
       if(openMap&&window.innerWidth<=760)setView("map");setTimeout(()=>focusRestaurant(id),openMap&&window.innerWidth<=760?140:0);
     }
     function isSavedPlace(id){return saved.has(String(id))||personalLinks.some(r=>String(r.place.id)===String(id))}
-    function toggleSave(id){
-      id=String(id);const removing=isSavedPlace(id),nextLinks=removing?personalLinks.filter(r=>String(r.place.id)!==id):personalLinks;
-      const nextSaved=new Set(saved);removing?nextSaved.delete(id):nextSaved.add(id);
-      try{localStorage.setItem(PERSONAL_KEY,JSON.stringify(nextLinks));localStorage.setItem("reelsmap_saved",JSON.stringify([...nextSaved]));}catch{toast("저장 공간을 확인해 주세요");return;}
-      personalLinks=nextLinks;saved.clear();nextSaved.forEach(x=>saved.add(x));toast(removing?"저장을 취소했어요":"맛집을 저장했어요");refreshSharedReels();applyFilters();
+    async function toggleSave(id){
+      if(!requireMember(()=>toggleSave(id)))return;
+      if(libraryBusy)return;libraryBusy=true;const owner=memberLibrary.owner;
+      try{const removing=isSavedPlace(id);if(removing)await memberLibrary.removeRestaurant(String(id));else await memberLibrary.saveRestaurant(String(id));await reloadLibrary();if(owner===memberLibrary.owner)toast(removing?"저장을 취소했어요":"맛집을 저장했어요");}
+      catch{toast("저장하지 못했어요. 연결 상태를 확인하고 다시 시도해 주세요.");await reloadLibrary().catch(()=>{});}finally{libraryBusy=false;}
     }
-    const PERSONAL_KEY = "reelsmap_personal_places_v1";
-    let personalLinks = [];
-    try { const rows = JSON.parse(localStorage.getItem(PERSONAL_KEY) || "[]"); if (Array.isArray(rows)) personalLinks = rows.filter(r => r && typeof r.url === "string" && r.place?.id && r.place?.name && Number.isFinite(r.place.latitude) && Number.isFinite(r.place.longitude)); } catch {}
+    let personalLinks = [], libraryReels = [];
     let ownMap = false, connectingUrl = null, picker = null, pickerMarker = null, pickedPoint = null;
     const canonicalReel = window.ReelsLinks.canonicalReel;
-    const PENDING_KEY = "reelsmap_pending_reels_v1";
-    function pendingReels() {
-      try { const rows=JSON.parse(localStorage.getItem(PENDING_KEY)||"[]"); return Array.isArray(rows)?[...new Set(rows.map(canonicalReel).filter(Boolean))]:[]; } catch { return []; }
+    function pendingReels(){return libraryReels.map(r=>r.url);}
+    async function addPastedReel(url){
+      if(!requireMember(()=>addPastedReel(url)))return;
+      try{await memberLibrary.saveReel(url);await reloadLibrary();$("pasteReelMessage").textContent="";$("pasteReelForm").reset();openConnection(url);}
+      catch{$("pasteReelMessage").textContent="보관하지 못했어요. 연결 상태를 확인해 주세요.";}
     }
-    $("pasteReelForm").addEventListener("submit", async event => {
-      event.preventDefault();
-      const urls=window.ReelsLinks.extractReels($("pasteReelInput").value);
-      if(urls.length!==1){$("pasteReelMessage").textContent=urls.length?"릴스 링크를 한 개씩 붙여넣어 주세요.":"Instagram 릴스 또는 게시물의 전체 링크를 붙여넣어 주세요.";return;}
-      try{localStorage.setItem(PENDING_KEY,JSON.stringify([...new Set([...pendingReels(),urls[0]])]));}
-      catch{$("pasteReelMessage").textContent="저장 공간을 확인해 주세요.";return;}
-      $("pasteReelMessage").textContent="";$("pasteReelForm").reset();await refreshSharedReels();openConnection(urls[0]);
+    $("pasteReelForm").addEventListener("submit",event=>{
+      event.preventDefault();const urls=window.ReelsLinks.extractReels($("pasteReelInput").value);
+      if(urls.length!==1){$("pasteReelMessage").textContent="Instagram 링크를 한 개씩 붙여넣어 주세요.";return;}
+      addPastedReel(urls[0]);
     });
     function personalRestaurants() {
       const places = new Map(restaurants.filter(x => isSavedPlace(x.id)).map(x => [String(x.id), {...x, reels: [...x.reels]}]));
@@ -352,14 +349,17 @@
       }
       return [...places.values()];
     }
-    function storeConnection(place) {
+    async function storeConnection(place) {
+      if(!requireMember(()=>storeConnection(place))||libraryBusy)return;
       const url = canonicalReel(connectingUrl);
       if (!url) return;
       const snapshot = {id:String(place.id), name:place.name, address:place.address || "", category:place.category || "식사", region:place.region || "", latitude:Number(place.latitude), longitude:Number(place.longitude), created_at:place.created_at || new Date().toISOString(), reels:[]};
       if (!snapshot.name.trim() || place.latitude==null || place.longitude==null || !Number.isFinite(snapshot.latitude) || !Number.isFinite(snapshot.longitude) || Math.abs(snapshot.latitude)>90 || Math.abs(snapshot.longitude)>180) { $("connectReelMessage").textContent="이 가게의 위치를 확인할 수 없어요. 직접 추가에서 위치를 선택해 주세요."; return; }
-      const next = [...personalLinks.filter(r => r.url !== url), {url,place:snapshot}];
-      try { localStorage.setItem(PERSONAL_KEY, JSON.stringify(next)); } catch { $("connectReelMessage").textContent="저장 공간이 부족해요. 공간을 확보한 뒤 다시 시도해 주세요."; return; }
-      personalLinks = next;
+      libraryBusy=true;const owner=memberLibrary.owner;
+      try{await memberLibrary.saveReel(url,snapshot);await reloadLibrary();}
+      catch{$("connectReelMessage").textContent="저장하지 못했어요. 연결 상태를 확인해 주세요.";return;}
+      finally{libraryBusy=false;}
+      if(owner!==memberLibrary.owner)return;
       $("connectReelDialog").close(); ownMap=true; $("mapScopeBtn").setAttribute("aria-pressed","true"); $("mapScopeBtn").textContent="전체 맛집 보기";
       activeCategory=mapCategory="전체"; activeReelFilter=""; $("searchInput").value="";
       setView("map"); refreshSharedReels(); toast("릴스와 가게를 내 지도에 저장했어요");
@@ -374,6 +374,7 @@
       for (const place of matches) { const button=document.createElement("button"); button.type="button"; button.className="auth-button"; button.textContent=`${place.name} · ${place.address || "주소 없음"}`; button.addEventListener("click",()=>storeConnection(place)); target.append(button); }
     }
     function openConnection(url) {
+      if(!requireMember(()=>openConnection(url)))return;
       connectingUrl=url; pickedPoint=null; $("privatePlaceForm").reset(); $("privatePlaceLocation").textContent="아직 위치를 선택하지 않았어요"; $("connectReelMessage").textContent=""; $("connectReelSource").textContent=url;
       $("placeMatchSearch").value=""; $("connectReelDialog").showModal(); showPlaceMatches();
       if (pickerMarker) { pickerMarker.remove(); pickerMarker=null; }
@@ -386,11 +387,16 @@
     $("placeMatchSearch").addEventListener("input",showPlaceMatches);
     $("closeConnectReel").addEventListener("click",()=>$("connectReelDialog").close());
     $("privatePlaceForm").addEventListener("submit",event=>{event.preventDefault();if(!pickedPoint){$("connectReelMessage").textContent="지도에서 가게 위치를 눌러주세요.";return;}storeConnection({id:"private-"+(globalThis.crypto?.randomUUID?.() || Date.now()+"-"+Math.random()),name:$("privatePlaceName").value.trim(),address:$("privatePlaceAddress").value.trim(),category:$("privatePlaceCategory").value,latitude:pickedPoint.lat,longitude:pickedPoint.lng});});
-    $("mapScopeBtn").addEventListener("click",()=>{ownMap=!ownMap;$("mapScopeBtn").setAttribute("aria-pressed",String(ownMap));$("mapScopeBtn").textContent=ownMap?"전체 맛집 보기":"내 지도만 보기";closePlaceSheet();applyFilters(true);});
+    $("mapScopeBtn").addEventListener("click",()=>{if(!requireMember(()=>$("mapScopeBtn").click()))return;ownMap=!ownMap;$("mapScopeBtn").setAttribute("aria-pressed",String(ownMap));$("mapScopeBtn").textContent=ownMap?"전체 맛집 보기":"내 지도만 보기";closePlaceSheet();applyFilters(true);});
     let inboxSignature = "";
     async function refreshSharedReels() {
       try {
-        const urls = [...new Set([...(window.ReelsInbox?.enabled ? await window.ReelsInbox.list() : []), ...pendingReels(), ...personalLinks.map(r=>r.url)].map(canonicalReel).filter(Boolean))];
+        if(!memberLibrary?.owner){$("sharedReelsPanel").classList.add("hidden");$("sharedReelsList").replaceChildren();return;}
+        const owner=memberLibrary.owner;
+        const incoming=window.ReelsInbox?.enabled?await window.ReelsInbox.list():[];
+        for(const raw of incoming){const url=canonicalReel(raw);if(!url)continue;if(owner!==memberLibrary.owner)return;await memberLibrary.saveReel(url);if(owner!==memberLibrary.owner)return;await window.ReelsInbox.remove(raw);}
+        if(incoming.length){const state=await memberLibrary.load();if(!state)return;libraryReels=state.reels;personalLinks=state.reels.filter(r=>r.place);}
+        const urls = [...new Set([...pendingReels(), ...personalLinks.map(r=>r.url)].map(canonicalReel).filter(Boolean))];
         const signature = JSON.stringify(urls);
         $("sharedReelsPanel").classList.toggle("hidden", !urls.length);
         $("sharedReelsList").replaceChildren();
@@ -401,7 +407,7 @@
           link.href=url;link.textContent="Instagram에서 릴스 확인 ↗";
           connect.type="button";connect.className="auth-button";connect.textContent=entry?`${entry.place.name} · 연결 변경`:"가게 연결하고 내 지도에 저장";connect.addEventListener("click",()=>openConnection(url));
           remove.type="button";remove.textContent="릴스 보관 취소";
-          remove.addEventListener("click",async()=>{try{if(window.ReelsInbox?.enabled)await window.ReelsInbox.remove(url);localStorage.setItem(PENDING_KEY,JSON.stringify(pendingReels().filter(r=>r!==url)));const next=personalLinks.filter(r=>r.url!==url);localStorage.setItem(PERSONAL_KEY,JSON.stringify(next));personalLinks=next;await refreshSharedReels();applyFilters();}catch{toast("보관을 취소하지 못했어요");}});
+          remove.addEventListener("click",async()=>{if(!requireMember()||libraryBusy)return;libraryBusy=true;try{await memberLibrary.removeReel(url);await reloadLibrary();}catch{toast("보관을 취소하지 못했어요");}finally{libraryBusy=false;}});
           row.append(link,connect,remove);$("sharedReelsList").append(row);
         }
         if(urls.some(url=>!personalLinks.some(r=>r.url===url)) && signature!==inboxSignature){setView("register");toast("공유받은 릴스를 가게와 연결해 주세요");}
@@ -409,18 +415,33 @@
       }catch{toast("공유받은 릴스를 불러오지 못했어요");}
     }
     window.addEventListener("reelsmap:shared-reels",refreshSharedReels);
-    refreshSharedReels();
     const authClient=window.ReelsAuth.client;
+    const memberLibrary=window.createMemberLibrary(authClient);
+    let libraryBusy=false,memberSession=null,pendingMemberAction=null;
+    function requireMember(action){
+      if(memberLibrary.owner&&currentProfile)return true;
+      pendingMemberAction=action||null;
+      if(memberSession?.user){profileLoadUser=null;syncMemberProfile(memberSession);toast("회원정보를 입력하고 가입을 완료해 주세요");}
+      else{$("authMessage").textContent="맛집과 릴스를 저장하려면 회원가입·로그인이 필요해요.";if(!$("loginDialog").open)$("loginDialog").showModal();}
+      return false;
+    }
+    function clearLibrary(){saved.clear();personalLinks=[];libraryReels=[];inboxSignature="";if($("connectReelDialog").open)$("connectReelDialog").close();applyFilters();refreshSharedReels();}
+    async function reloadLibrary(){const state=await memberLibrary.load();if(!state)return;saved.clear();state.saved.forEach(id=>saved.add(id));libraryReels=state.reels;personalLinks=state.reels.filter(r=>r.place);applyFilters();await refreshSharedReels();}
+    async function activateLibrary(session){
+      if(!session?.user||!currentProfile)return;const id=session.user.id;memberLibrary.setOwner(id);
+      try{await reloadLibrary();if(memberLibrary.owner!==id)return;await window.ReelsInbox?.setAccount(id,session.expires_at);await refreshSharedReels();const action=pendingMemberAction;pendingMemberAction=null;if(action)await action();}
+      catch{toast("저장 목록을 불러오지 못했어요. 다시 시도해 주세요.");}
+    }
     let currentProfile=null,profileLoadUser=null,profileSaving=false,authBusy=false;
-    function showAccount(session){const loggedIn=!!session?.user;$("openLogin").textContent=loggedIn?"로그아웃":"로그인";$("accountNickname").textContent=currentProfile?.nickname||"";$("accountNickname").classList.toggle("hidden",!loggedIn||!currentProfile?.nickname)}
+    function showAccount(session){if((session?.user?.id||null)!==(memberSession?.user?.id||null)){memberSession=session;currentProfile=null;profileLoadUser=null;memberLibrary.setOwner(null);clearLibrary();window.ReelsInbox?.setAccount(null).catch(()=>{});}const loggedIn=!!session?.user;$("openLogin").textContent=loggedIn?"로그아웃":"로그인";$("accountNickname").textContent=currentProfile?.nickname||"";$("accountNickname").classList.toggle("hidden",!loggedIn||!currentProfile?.nickname)}
     function openProfileEditor(profile,required=false){$("profileBirthDate").max=new Date().toISOString().slice(0,10);$("profileTitle").textContent=required?"회원 정보 입력":"회원 정보 수정";$("profileIntro").textContent=required?"가입을 마치려면 아래 정보를 입력해 주세요.":"회원정보를 수정할 수 있어요.";$("profileFullName").value=profile?.full_name||"";$("profilePhone").value=profile?.phone_number||"";$("profileBirthDate").value=profile?.birth_date||"";$("profileNickname").value=profile?.nickname||"";$("profileConsent").checked=false;$("profileConsent").required=required;$("profileConsent").closest("label").classList.toggle("hidden",!required);$("visitTrackingConsent").checked=profile?.visit_tracking_consent===true;$("profileMessage").textContent="";if(!$("profileDialog").open)$("profileDialog").showModal()}
-    async function syncMemberProfile(session){if(!session?.user){currentProfile=null;profileLoadUser=null;showAccount(null);if($("profileDialog").open)$("profileDialog").close();return}const userId=session.user.id;if(profileLoadUser===userId)return;profileLoadUser=userId;try{const{data,error}=await authClient.from("member_profiles").select("full_name,phone_number,birth_date,nickname,visit_tracking_consent,visit_tracking_consented_at").eq("user_id",userId).maybeSingle();if(error)throw error;const{data:{session:latest}}=await authClient.auth.getSession();if(latest?.user?.id!==userId)return;currentProfile=data||null;showAccount(latest);if(!data){const metadata=session.user.user_metadata||{};openProfileEditor({full_name:metadata.full_name||metadata.name||"",nickname:metadata.nickname||""},true)}}catch(error){console.error("Member profile load failed",error);profileLoadUser=null;toast("회원정보를 불러오지 못했어요. 다시 시도해 주세요.")}}
-    async function saveMemberProfile(event){event.preventDefault();if(profileSaving||!$("profileForm").reportValidity())return;const phone=$("profilePhone").value.trim(),digits=phone.replace(/\D/g,"");if(digits.length<8||digits.length>15){$("profileMessage").textContent="전화번호를 다시 확인해 주세요.";return}profileSaving=true;$("profileSave").disabled=true;$("profileMessage").textContent="";try{const{data:{session},error:sessionError}=await authClient.auth.getSession();if(sessionError||!session?.user)throw sessionError||new Error("로그인이 필요합니다.");const visitConsent=$("visitTrackingConsent").checked;const profile={user_id:session.user.id,full_name:$("profileFullName").value.trim(),phone_number:phone,birth_date:$("profileBirthDate").value,nickname:$("profileNickname").value.trim(),visit_tracking_consent:visitConsent,visit_tracking_consented_at:visitConsent?new Date().toISOString():null,updated_at:new Date().toISOString()};const{error}=await authClient.from("member_profiles").upsert(profile,{onConflict:"user_id"});if(error){if(error.code==="23505")throw new Error("이미 사용 중인 닉네임이에요.");if(error.code==="23514")throw new Error("운영진을 사칭할 수 있는 닉네임은 사용할 수 없습니다.");throw error}currentProfile=profile;profileLoadUser=session.user.id;showAccount(session);$("profileDialog").close();toast("회원정보를 저장했어요")}catch(error){console.error("Member profile save failed",error);$("profileMessage").textContent=error.message?.includes("닉네임")?error.message:"저장하지 못했어요. 입력값과 연결 상태를 확인해 주세요."}finally{profileSaving=false;$("profileSave").disabled=false}}
+    async function syncMemberProfile(session){if(!session?.user){currentProfile=null;profileLoadUser=null;showAccount(null);if($("profileDialog").open)$("profileDialog").close();return}const userId=session.user.id;if(profileLoadUser===userId)return;profileLoadUser=userId;try{const{data,error}=await authClient.from("member_profiles").select("full_name,phone_number,birth_date,nickname,visit_tracking_consent,visit_tracking_consented_at").eq("user_id",userId).maybeSingle();if(error)throw error;const{data:{session:latest}}=await authClient.auth.getSession();if(latest?.user?.id!==userId)return;currentProfile=data||null;showAccount(latest);if(data)await activateLibrary(latest);if(!data){const metadata=session.user.user_metadata||{};openProfileEditor({full_name:metadata.full_name||metadata.name||"",nickname:metadata.nickname||""},true)}}catch(error){console.error("Member profile load failed",error);profileLoadUser=null;toast("회원정보를 불러오지 못했어요. 다시 시도해 주세요.")}}
+    async function saveMemberProfile(event){event.preventDefault();if(profileSaving||!$("profileForm").reportValidity())return;const phone=$("profilePhone").value.trim(),digits=phone.replace(/\D/g,"");if(digits.length<8||digits.length>15){$("profileMessage").textContent="전화번호를 다시 확인해 주세요.";return}profileSaving=true;$("profileSave").disabled=true;$("profileMessage").textContent="";try{const{data:{session},error:sessionError}=await authClient.auth.getSession();if(sessionError||!session?.user)throw sessionError||new Error("로그인이 필요합니다.");const visitConsent=$("visitTrackingConsent").checked;const profile={user_id:session.user.id,full_name:$("profileFullName").value.trim(),phone_number:phone,birth_date:$("profileBirthDate").value,nickname:$("profileNickname").value.trim(),visit_tracking_consent:visitConsent,visit_tracking_consented_at:visitConsent?new Date().toISOString():null,updated_at:new Date().toISOString()};const{error}=await authClient.from("member_profiles").upsert(profile,{onConflict:"user_id"});if(error){if(error.code==="23505")throw new Error("이미 사용 중인 닉네임이에요.");if(error.code==="23514")throw new Error("운영진을 사칭할 수 있는 닉네임은 사용할 수 없습니다.");throw error}currentProfile=profile;profileLoadUser=session.user.id;showAccount(session);$("profileDialog").close();toast("회원정보를 저장했어요");await activateLibrary(session)}catch(error){console.error("Member profile save failed",error);$("profileMessage").textContent=error.message?.includes("닉네임")?error.message:"저장하지 못했어요. 입력값과 연결 상태를 확인해 주세요."}finally{profileSaving=false;$("profileSave").disabled=false}}
     async function startSocialLogin(provider){if(authBusy||provider==="kakao")return;authBusy=true;$("authMessage").textContent="로그인 연결 중…";$("googleLogin").disabled=true;try{await window.ReelsAuth.signIn(provider);$("authMessage").textContent="브라우저에서 로그인을 마치면 앱으로 돌아옵니다."}catch(error){console.error("Social sign-in failed",error);$("authMessage").textContent=error.message?.includes("앱에서")?error.message:"로그인 연결에 실패했어요. 설정과 인터넷 연결을 확인해 주세요.";authBusy=false;$("googleLogin").disabled=false}}
-    async function initSocialAuth(){try{authClient.auth.onAuthStateChange((event,session)=>{showAccount(session);if(event==="SIGNED_IN")setTimeout(()=>syncMemberProfile(session),0);if(event==="SIGNED_OUT")syncMemberProfile(null)});const{data,error}=await authClient.auth.getSession();if(error)throw error;showAccount(data.session);if(data.session)await syncMemberProfile(data.session)}catch(error){console.error("Auth initialization failed",error);toast("로그인 상태를 확인하지 못했어요")}}
+    async function initSocialAuth(){try{authClient.auth.onAuthStateChange((event,session)=>{showAccount(session);if(event==="SIGNED_IN")setTimeout(()=>syncMemberProfile(session),0);if(event==="TOKEN_REFRESHED"&&currentProfile&&memberLibrary.owner===session?.user?.id)window.ReelsInbox?.setAccount(session.user.id,session.expires_at).catch(()=>{});if(event==="SIGNED_OUT")syncMemberProfile(null)});const{data,error}=await authClient.auth.getSession();if(error)throw error;showAccount(data.session);if(data.session)await syncMemberProfile(data.session)}catch(error){console.error("Auth initialization failed",error);toast("로그인 상태를 확인하지 못했어요")}}
     window.addEventListener("reelsmap:auth-result",event=>{authBusy=false;$("googleLogin").disabled=false;if(event.detail.ok){$("authMessage").textContent="";if($("loginDialog").open)$("loginDialog").close();toast("로그인했어요")}else{$("authMessage").textContent="로그인을 완료하지 못했어요. 다시 시도해 주세요.";console.error("OAuth callback failed",event.detail.message)}});
     async function shareRestaurant(id){const x=[...restaurants,...personalRestaurants()].find(r=>String(r.id)===String(id));if(!x)return;const data={title:x.name,text:`${x.name} · ${x.address||"서울 맛집"}`,url:String(id).startsWith("private-")?x.reels[0]?.url:`https://myreelsmap.com/?place=${encodeURIComponent(id)}`};try{if(window.ReelsNative?.enabled)await window.ReelsNative.share(data);else if(navigator.share)await navigator.share(data);else{await navigator.clipboard.writeText(data.url);toast("링크를 복사했어요")}}catch{}}
-    function setView(view){activeView=view;document.body.dataset.view=view;document.querySelectorAll(".nav-btn").forEach(x=>x.classList.toggle("on",x.dataset.view===view));applyFilters(true);if(view==="map")setTimeout(()=>{if(mapReady){map.relayout();fitMapToMarkers();renderLocationMarker()}},120)}
+    function setView(view){if(view==="saved"&&!requireMember(()=>setView(view)))return;activeView=view;document.body.dataset.view=view;document.querySelectorAll(".nav-btn").forEach(x=>x.classList.toggle("on",x.dataset.view===view));applyFilters(true);if(view==="map")setTimeout(()=>{if(mapReady){map.relayout();fitMapToMarkers();renderLocationMarker()}},120)}
     document.addEventListener("click",event=>{const reel=event.target.closest("[data-track-reel]"),route=event.target.closest("[data-track-route]");if(reel)trackEngagement(reel.dataset.trackReel,"reel");else if(route)trackEngagement(route.dataset.trackRoute,"route")});
     document.addEventListener("click",event=>{const link=event.target.closest('a[href^="./policy.html"],a[href^="https://www.instagram.com/"],a[href^="https://instagram.com/"],a[href^="https://map.kakao.com/"],a[href^="https://myreelsmap.com/"]');if(!link||!window.ReelsNative?.enabled)return;event.preventDefault();const url=link.getAttribute("href").startsWith("./policy.html")?new URL(link.getAttribute("href"),"https://myreelsmap.com/").href:link.href;window.ReelsNative.open(url).catch(()=>toast("링크를 열지 못했어요"))});
     $("categoryFilters").addEventListener("click",event=>{const category=event.target.closest("[data-category]");if(!category)return;activeCategory=category.dataset.category;mapCategory=activeCategory;closePlaceSheet();applyFilters(true)});

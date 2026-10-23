@@ -5,6 +5,9 @@ import { Share } from '@capacitor/share';
 import { App } from '@capacitor/app';
 import { createClient } from '@supabase/supabase-js';
 
+import { createMemberLibrary } from '../../assets/member-library.js';
+window.createMemberLibrary = createMemberLibrary;
+
 import * as ReelsLinks from './shared-reels.js';
 window.ReelsLinks = ReelsLinks;
 
@@ -79,6 +82,7 @@ window.ReelsNative = {
 const SharedReels = registerPlugin('SharedReels');
 window.ReelsInbox = {
   enabled: native,
+  async setAccount(userId, expiresAt) { if (native) await SharedReels.setAccount({ userId: userId || "", expiresAt: expiresAt || 0 }); },
   async list() { return native ? (await SharedReels.list()).urls : []; },
   async remove(url) { if (native) await SharedReels.remove({ url }); }
 };
