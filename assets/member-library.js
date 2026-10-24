@@ -34,6 +34,12 @@ export function createMemberLibrary(client) {
       const { error } = await client.from('user_reel_library').upsert({user_id:id,url,...(place === undefined ? {} : {place})},options);
       if (error) throw error;
     },
+    async updateReel(url, place) {
+      const id = context();
+      const { data, error } = await client.from('user_reel_library').update({place}).eq('user_id',id).eq('url',url).select('url');
+      if (error) throw error;
+      if (!data?.length) throw new Error('보관함에서 삭제된 릴스예요.');
+    },
     async removeReel(url) {
       const id = context();
       const { error } = await client.from('user_reel_library').delete().eq('user_id',id).eq('url',url);

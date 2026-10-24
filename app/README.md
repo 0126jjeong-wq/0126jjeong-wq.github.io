@@ -42,3 +42,9 @@ Codemagic에서 macOS 빌드와 업로드를 대신하므로 사용자 소유 Ma
 - Apple Developer에서 본 앱 `com.myreelsmap.app`와 확장 `com.myreelsmap.app.ShareExtension` 양쪽에 동일한 App Group을 활성화하고 두 App ID용 프로필을 준비해야 실제 기기에서 공유 보관이 동작한다. Codemagic의 서명 설정도 두 프로필을 포함해야 한다. 공유 확장 변경은 새 네이티브 빌드를 설치해야 반영된다.
 - 검증: JS 빌드와 Capacitor sync, Xcode 프로젝트 파싱, plist 검사를 로컬에서 수행했다. Xcode 컴파일 및 Instagram 실기기 공유 테스트는 아직 필요하다.
 - 링크 정규화·위장 도메인 거부·기존 맛집 연결 검사는 `node --test tests/shared-reels.test.mjs`로 실행한다(`app` 폴더에서 실행).
+
+## 웹과 앱의 개인 릴스 역할
+
+- Instagram 공유 수신 및 새 개인 릴스 보관은 앱에서 수행한다. 웹에는 개인 릴스 URL 붙여넣기나 공유 수신 기능을 제공하지 않는다.
+- 운영 웹의 저장 탭에서 앱으로 보관한 릴스를 확인하고, 가게명·카테고리·연결 가게를 수정하거나 보관함에서 삭제할 수 있다. 공유 링크와 공개 매장 정보는 이 관리 화면에서 변경하지 않는다.
+- 웹 수정은 기존 보관 행에 대한 UPDATE만 사용하므로 이미 삭제한 릴스를 재생성하지 않는다. 앱은 다시 활성화될 때 서버 목록을 갱신하여 웹 변경을 반영한다.

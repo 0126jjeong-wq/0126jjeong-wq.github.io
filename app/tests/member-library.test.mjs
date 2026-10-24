@@ -5,11 +5,11 @@ const source=readFileSync(new URL('../../assets/member-library.js',import.meta.u
 const {createMemberLibrary}=await import('data:text/javascript;base64,'+Buffer.from(source).toString('base64'));
 function fakeClient(reply=()=>({data:[],error:null})){
   const calls=[];
-  return {calls,from(table){const call={table,filters:[]};calls.push(call);const q={select(){return q},eq(...filter){call.filters.push(filter);return q},upsert(row,options){Object.assign(call,{row,options});return q},delete(){call.delete=true;return q},then(ok,fail){return Promise.resolve(reply(call)).then(ok,fail)}};return q;}};
+  return {calls,from(table){const call={table,filters:[]};calls.push(call);const q={select(){return q},eq(...filter){call.filters.push(filter);return q},update(row){call.update=row;return q},upsert(row,options){Object.assign(call,{row,options});return q},delete(){call.delete=true;return q},then(ok,fail){return Promise.resolve(reply(call)).then(ok,fail)}};return q;}};
 }
 test('guests cannot read or mutate any member data',async()=>{
  const c=fakeClient(),library=createMemberLibrary(c);
- for(const work of [()=>library.load(),()=>library.saveRestaurant('r'),()=>library.removeRestaurant('r'),()=>library.saveReel('url'),()=>library.removeReel('url')])await assert.rejects(work,/로그인/);
+ for(const work of [()=>library.load(),()=>library.saveRestaurant('r'),()=>library.removeRestaurant('r'),()=>library.saveReel('url'),()=>library.removeReel('url'),()=>library.updateReel('url',{})])await assert.rejects(work,/로그인/);
  assert.equal(c.calls.length,0);
 });
 test('all reads and deletes constrain the current owner; inbox imports retain existing connections',async()=>{
@@ -28,4 +28,10 @@ test('a delayed account A response is discarded after switching accounts or logg
 test('network or RLS failures propagate instead of claiming a successful save',async()=>{
  const denied=new Error('RLS denied'),c=fakeClient(()=>({error:denied})),library=createMemberLibrary(c);library.setOwner('A');
  await assert.rejects(()=>library.saveRestaurant('r'),/RLS denied/);await assert.rejects(()=>library.load(),/RLS denied/);
+});
+
+test('web edits update only an existing owned Reel and never re-create a deleted import',async()=>{
+ const c=fakeClient(()=>({data:[{url:'url'}],error:null})),library=createMemberLibrary(c);library.setOwner('A');
+ await library.updateReel('url',{name:'updated'});const call=c.calls.at(-1);assert.equal(call.table,'user_reel_library');assert.deepEqual(call.filters,[['user_id','A'],['url','url']]);assert.deepEqual(call.update,{place:{name:'updated'}});assert.equal(call.row,undefined);
+ const missing=createMemberLibrary(fakeClient());missing.setOwner('A');await assert.rejects(()=>missing.updateReel('deleted',{}),/삭제된/);
 });

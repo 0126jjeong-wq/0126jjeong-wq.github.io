@@ -343,9 +343,10 @@
     function personalRestaurants() {
       const places = new Map(restaurants.filter(x => isSavedPlace(x.id)).map(x => [String(x.id), {...x, reels: [...x.reels]}]));
       for (const entry of personalLinks) {
-        const id = String(entry.place.id), current = restaurants.find(x => String(x.id) === id) || entry.place;
+        const id = String(entry.place.id), registered = restaurants.find(x => String(x.id) === id), current = {...registered,...entry.place,reels:registered?.reels||[]};
         if (!places.has(id)) places.set(id, {...current, reels: [...(current.reels || [])]});
         const place = places.get(id);
+        Object.assign(place,{...current,reels:place.reels});
         if (!place.reels.some(r => canonicalReel(r.url) === entry.url)) place.reels.push({url:entry.url, id:null});
       }
       return [...places.values()];
@@ -415,7 +416,7 @@
         inboxSignature=signature;
       }catch{toast("공유받은 릴스를 불러오지 못했어요");}
     }
-    window.addEventListener("reelsmap:shared-reels",refreshSharedReels);
+    window.addEventListener("reelsmap:shared-reels",()=>{if(memberLibrary.owner)reloadLibrary().catch(()=>toast("보관함을 새로 불러오지 못했어요"));});
     const authClient=window.ReelsAuth.client;
     const memberLibrary=window.createMemberLibrary(authClient);
     let libraryBusy=false,memberSession=null,pendingMemberAction=null;
