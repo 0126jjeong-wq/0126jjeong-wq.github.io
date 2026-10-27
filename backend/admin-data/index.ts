@@ -119,12 +119,30 @@ Deno.serve(async(req:Request)=>{
   try{
     if(req.method==="GET"){
       const params=new URL(req.url).searchParams;
+      const memberVisits=params.get("member_visits");
+      if(memberVisits!==null){
+        const from=params.get("from"),to=params.get("to");
+        if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(memberVisits)||
+          (from!==null&&!validDateKey(from))||(to!==null&&!validDateKey(to))||Boolean(from)!==Boolean(to)||Boolean(from&&to&&from>to))
+          return json({ok:false,error:"방문 기록 조회 조건을 확인해주세요."},400);
+        const {data:profile,error:profileError}=await admin.from("member_profiles").select("visit_tracking_consent").eq("user_id",memberVisits).maybeSingle();
+        if(profileError)throw profileError;
+        if(!profile?.visit_tracking_consent)return json({ok:false,error:"방문 기록에 동의한 회원만 조회할 수 있습니다."},403);
+        let query=admin.from("engagement_events").select("created_at").eq("member_user_id",memberVisits).eq("event_type","visit").order("created_at",{ascending:false}).limit(100);
+        if(from&&to){query=query.gte("created_at",new Date(`${from}T00:00:00+09:00`).toISOString()).lt("created_at",new Date(new Date(`${to}T00:00:00+09:00`).getTime()+86400000).toISOString())}
+        const {data:visits,error:visitsError}=await query;
+        if(visitsError)throw visitsError;
+        return json({ok:true,visits:visits||[]});
+      }
       if(params.get("members")==="1"){
         const from=params.get("from"),to=params.get("to"),search=text(params.get("q"),100),page=Number(params.get("page")||"1");
         if((from&&!validDateKey(from))||(to&&!validDateKey(to))||Boolean(from)!==Boolean(to)||from&&to&&from>to||!Number.isInteger(page)||page<1||page>10000)return json({ok:false,error:"회원 조회 조건을 확인해주세요."},400);
         const {data:memberData,error:memberError}=await admin.rpc("get_admin_member_management",{p_from_date:from||null,p_to_date:to||null,p_search:search,p_page:page,p_page_size:50});
         if(memberError)throw memberError;
-        return json({ok:true,members:memberData||{total:0,members:[]}});
+        const safeMembers=memberData||{total:0,members:[]};
+        return json({ok:true,members:{...safeMembers,members:(safeMembers.members||[]).map((member:any)=>({
+          ...member,visit_count:member.visit_tracking_consent?member.visit_count:0
+        }))}});
       }
       const analyticsDate=params.get("analytics_date");
       if(analyticsDate!==null){
