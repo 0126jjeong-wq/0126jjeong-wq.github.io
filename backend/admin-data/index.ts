@@ -135,9 +135,9 @@ Deno.serve(async(req:Request)=>{
         return json({ok:true,visits:visits||[]});
       }
       if(params.get("members")==="1"){
-        const from=params.get("from"),to=params.get("to"),search=text(params.get("q"),100),page=Number(params.get("page")||"1");
-        if((from&&!validDateKey(from))||(to&&!validDateKey(to))||Boolean(from)!==Boolean(to)||from&&to&&from>to||!Number.isInteger(page)||page<1||page>10000)return json({ok:false,error:"회원 조회 조건을 확인해주세요."},400);
-        const {data:memberData,error:memberError}=await admin.rpc("get_admin_member_management",{p_from_date:from||null,p_to_date:to||null,p_search:search,p_page:page,p_page_size:50});
+        const from=params.get("from"),to=params.get("to"),search=text(params.get("q"),100),page=Number(params.get("page")||"1"),provider=params.get("provider")||"all";
+        if(!["all","google","kakao"].includes(provider)||(from&&!validDateKey(from))||(to&&!validDateKey(to))||Boolean(from)!==Boolean(to)||from&&to&&from>to||!Number.isInteger(page)||page<1||page>10000)return json({ok:false,error:"회원 조회 조건을 확인해주세요."},400);
+        const {data:memberData,error:memberError}=await admin.rpc("get_admin_member_management",{p_from_date:from||null,p_to_date:to||null,p_search:search,p_page:page,p_page_size:50,p_provider:provider});
         if(memberError)throw memberError;
         const safeMembers=memberData||{total:0,members:[]};
         return json({ok:true,members:{...safeMembers,members:(safeMembers.members||[]).map((member:any)=>({
