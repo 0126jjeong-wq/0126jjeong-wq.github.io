@@ -1,0 +1,30 @@
+name: Refresh public place pages
+
+on:
+  schedule:
+    - cron: '20 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build public SEO pages from published restaurants
+        run: node scripts/build-seo.mjs
+      - name: Verify generator
+        run: node --test scripts/build-seo.test.mjs
+      - name: Publish refreshed pages
+        run: |
+          git add sitemap.xml places/
+          if git diff --cached --quiet; then exit 0; fi
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Refresh public restaurant search pages'
+          git push origin HEAD:main
