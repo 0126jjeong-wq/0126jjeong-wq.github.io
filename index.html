@@ -7,8 +7,22 @@
   <meta name="theme-color" content="#ff4d2e">
   <meta name="reelsmap-build" content="2026-10-10-member-management-v1">
   <meta name="description" content="위치가 확인된 서울 맛집을 지도에서 찾고 관련 Instagram 릴스로 분위기를 확인하세요.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://myreelsmap.com/">
+  <link rel="icon" type="image/svg+xml" href="/assets/reelsmap-logo.svg">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ko_KR">
+  <meta property="og:site_name" content="릴스맛집지도">
   <meta property="og:title" content="릴스맛집지도">
   <meta property="og:description" content="릴스로 먼저 보고, 지도에서 바로 찾는 서울 맛집 큐레이션">
+  <meta property="og:url" content="https://myreelsmap.com/">
+  <meta property="og:image" content="https://myreelsmap.com/assets/reelsmap-share.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="릴스맛집지도 | 서울 맛집을 릴스와 지도로">
+  <meta name="twitter:description" content="위치가 확인된 서울 맛집과 관련 Instagram 릴스를 한눈에 확인하세요.">
+  <meta name="twitter:image" content="https://myreelsmap.com/assets/reelsmap-share.png">
   <title>릴스맛집지도 | 서울 맛집을 릴스와 지도로</title>
   <link rel="preconnect" href="https://dapi.kakao.com">
   <link rel="preconnect" href="https://t1.daumcdn.net">
@@ -89,7 +103,7 @@
       <div id="sortNote" class="sort-note hidden" aria-live="polite"></div>
       <div class="cards" id="cards"><div class="empty" role="status"><b>맛집을 불러오고 있어요</b>잠시만 기다려주세요.</div></div>
       <nav id="pagination" class="pagination hidden" aria-label="맛집 목록 페이지"></nav>
-      <footer class="site-footer"><nav><a href="./policy.html#service">서비스 안내</a><a href="./policy.html#creator-submit">내 릴스 등록</a><a href="./policy.html?role=merchant&type=correction#request">매장 정보 수정</a><a href="./policy.html#privacy">개인정보처리방침</a></nav><p>사진·영상은 저장하거나 재배포하지 않으며 Instagram 게시물로 연결합니다. 콘텐츠 권리는 각 게시자에게 있습니다.</p></footer>
+      <footer class="site-footer"><nav><a href="./places/">지역별 전체 맛집</a><a href="./policy.html#service">서비스 안내</a><a href="./policy.html#creator-submit">내 릴스 등록</a><a href="./policy.html?role=merchant&type=correction#request">매장 정보 수정</a><a href="./policy.html#privacy">개인정보처리방침</a></nav><p>사진·영상은 저장하거나 재배포하지 않으며 Instagram 게시물로 연결합니다. 콘텐츠 권리는 각 게시자에게 있습니다.</p></footer>
     </section>
     <section class="map-wrap" id="mapWrap">
       <div class="map-card"><b>지도에서 보기</b><span id="mapCount">맛집 불러오는 중…</span></div>
@@ -132,6 +146,7 @@
     };
     const PAGE_SIZE=10;
     let restaurants=[],filtered=[],mapFiltered=[],activeCategory="전체",mapCategory="전체",activeReelFilter="all",activeSort="default",activeView="list",activeId=null,userLocation=null,locationState="idle",currentPage=1,dataReady=false,loadingError=false;
+    const requestedPlaceId=new URLSearchParams(location.search).get("place");let requestedPlaceOpened=false;
     let map=null,mapReady=false,locationOverlay=null,markerOverlays=[];
     const saved=new Set();
     const VISITOR_KEY="reelsmap_visitor_v1";
@@ -226,7 +241,7 @@
       map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
       kakao.maps.event.addListener(map,"click",closePlaceSheet);
       kakao.maps.event.addListener(map,"zoom_changed",updateMarkerAppearances);
-      mapReady=true;$("mapError").classList.add("hidden");renderMarkers();renderLocationMarker();
+      mapReady=true;$("mapError").classList.add("hidden");renderMarkers();renderLocationMarker();openRequestedPlace();
     }
     function closePlaceSheet(){activeId=null;$("placeSheet").classList.add("hidden");document.querySelectorAll(".card").forEach(c=>c.classList.remove("active"));markerById.forEach(item=>item.button.classList.remove("active"))}
     function kakaoRouteUrl(x){return `https://map.kakao.com/link/to/${encodeURIComponent(x.name)},${Number(x.latitude)},${Number(x.longitude)}`}
@@ -264,7 +279,7 @@
     function renderRestaurantCard(x,index){
       const reelsStack=x.reels.length>1?`<div class="reels-stack"><div class="reels-title">이 매장의 관련 릴스 · 먼저 등록된 순서</div>${x.reels.map((reel,n)=>`<a class="reel-row" href="${esc(reel.url||"#")}" data-track-reel="${esc(reel.id)}"><span class="reel-index">${esc(creatorName(reel))}</span><span class="reel-source">관련 릴스 ${n+1} · Instagram에서 보기</span>${reelMetric(reel)?`<span class="reel-metric">${esc(reelMetric(reel))}</span>`:""}<span class="reel-arrow">↗</span></a>`).join("")}</div>`:"";
       const saveButton=activeView==="saved"?`<button class="reel-btn" type="button" data-save="${x.id}" aria-label="저장 취소">저장 취소</button>`:`<button class="icon-btn ${saved.has(String(x.id))?"saved":""}" data-save="${x.id}" aria-label="${saved.has(String(x.id))?"저장 취소":"저장"}">${saved.has(String(x.id))?"♥":"♡"}</button>`;
-      return `<article class="card ${activeId===x.id?"active":""}" data-id="${x.id}" tabindex="0"><div class="card-top">${cardVisual(x,index)}<div><h3>${esc(x.name)}</h3><div class="address">📍 ${esc(x.address||"서울")}</div><div class="tags"><span class="tag accent">${esc(x.category||"식사")}</span><span class="tag">${esc(x.region||"서울")}</span>${userLocation&&Number.isFinite(x.distance)?`<span class="tag distance">내 위치에서 ${distanceLabel(x.distance)}</span>`:""}<span class="tag">관련 릴스 ${x.reels.length}개</span>${signalBadges(x)}</div></div></div>${menuLine(x)}${creatorAttribution(x)?`<div class="creator-line">${creatorAttribution(x)}</div>`:""}${reelsStack}<div class="card-foot"><div class="stats"><span>✓ 위치 확인</span><span>릴스 ${x.reels.length}개</span><span class="route-proof">최근 7일 길찾기 약 ${Number(x.route_clicks_7d||0).toLocaleString("ko-KR")}회</span></div><div class="card-actions">${saveButton}<button class="icon-btn" data-share="${x.id}" aria-label="공유">↗</button>${x.reels[0]?`<a class="reel-btn" href="${esc(x.reels[0].url)}" data-track-reel="${esc(x.reels[0].id)}">릴스 보기</a>`:""}</div></div></article>`;
+      return `<article class="card ${activeId===x.id?"active":""}" data-id="${x.id}" tabindex="0"><div class="card-top">${cardVisual(x,index)}<div><h3>${esc(x.name)}</h3><div class="address">📍 ${esc(x.address||"서울")}</div><div class="tags"><span class="tag accent">${esc(x.category||"식사")}</span><span class="tag">${esc(x.region||"서울")}</span>${userLocation&&Number.isFinite(x.distance)?`<span class="tag distance">내 위치에서 ${distanceLabel(x.distance)}</span>`:""}<span class="tag">관련 릴스 ${x.reels.length}개</span>${signalBadges(x)}</div></div></div>${menuLine(x)}${creatorAttribution(x)?`<div class="creator-line">${creatorAttribution(x)}</div>`:""}${reelsStack}<div class="card-foot"><div class="stats"><span>✓ 위치 확인</span><span>릴스 ${x.reels.length}개</span><span class="route-proof">최근 7일 길찾기 약 ${Number(x.route_clicks_7d||0).toLocaleString("ko-KR")}회</span></div><div class="card-actions">${saveButton}<button class="icon-btn" data-share="${x.id}" aria-label="공유">↗</button><a class="reel-btn" href="/places/${encodeURIComponent(x.id)}/">상세 정보</a>${x.reels[0]?`<a class="reel-btn" href="${esc(x.reels[0].url)}" data-track-reel="${esc(x.reels[0].id)}">릴스 보기</a>`:""}</div></div></article>`;
     }
     function render(){
       const totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)),pageStart=(currentPage-1)*PAGE_SIZE,pageRows=filtered.slice(pageStart,pageStart+PAGE_SIZE);
@@ -315,6 +330,12 @@
       trackEngagement(id,"restaurant");
       if(openMap&&window.innerWidth<=760)setView("map");setTimeout(()=>focusRestaurant(id),openMap&&window.innerWidth<=760?140:0);
     }
+    function openRequestedPlace(){
+      if(requestedPlaceOpened||!requestedPlaceId||!mapReady||!dataReady)return;
+      const restaurant=restaurants.find(row=>String(row.id)===requestedPlaceId);
+      if(!restaurant)return;
+      requestedPlaceOpened=true;setView("map");setTimeout(()=>selectRestaurant(restaurant.id,false),140);
+    }
     let memberLibrary=null,memberSession=null,libraryBusy=false,managedReels=[],renderReelManager=null,lastReelManagerSignature="";
     const SAVE_INTENT="reelsmap_member_intent_v1";
     function requireMember(intent){
@@ -361,7 +382,7 @@
     function authErrorMessage(error,provider){const message=String(error?.message||"").toLowerCase();if(message.includes("provider")&&(message.includes("disabled")||message.includes("not enabled")))return provider==="kakao"?"카카오 로그인은 개발자 설정과 Supabase 연결을 마친 뒤 사용할 수 있어요.":"Google 로그인이 Supabase에서 아직 활성화되지 않았어요. 제공자 설정을 확인해 주세요.";if(message.includes("redirect")||message.includes("url"))return "로그인 후 돌아올 주소가 Supabase 허용 목록에 없습니다. https://myreelsmap.com/ 을 추가해 주세요.";return "로그인에 연결하지 못했어요. 잠시 후 다시 시도해 주세요."}
     async function startSocialLogin(provider){if(authBusy)return;if(location.hostname.endsWith(".chatgpt.site")){const officialUrl=new URL("https://myreelsmap.com/");officialUrl.searchParams.set("openLogin","1");location.assign(officialUrl.href);return}authBusy=true;const button=$(provider==="google"?"googleLogin":"kakaoLogin"),message=$("authMessage");$("googleLogin").disabled=true;$("kakaoLogin").disabled=true;message.textContent="로그인 연결 중…";try{if(!authClient)throw new Error("인증 서비스를 불러오지 못했습니다.");saveAuthReturnState();const redirectTo="https://myreelsmap.com/";const{error}=await authClient.auth.signInWithOAuth({provider,options:{redirectTo}});if(error)throw error}catch(error){console.error("Social sign-in failed",error);try{sessionStorage.removeItem(AUTH_RETURN_KEY)}catch{}message.textContent=authClient?authErrorMessage(error,provider):"로그인 기능을 불러오지 못했어요. 인터넷 연결 후 새로고침해 주세요.";$("googleLogin").disabled=false;$("kakaoLogin").disabled=false;authBusy=false}}
     async function initSocialAuth(){try{const{createClient}=await import("https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.95.0/+esm");authClient=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storageKey:"reelsmap-public-session"}});const{createMemberLibrary}=await import("./assets/member-library.js");memberLibrary=createMemberLibrary(authClient);({renderReelManager}=await import("./assets/reel-manager.js"));const{data,error}=await authClient.auth.getSession();if(error)throw error;showAccount(data.session);if(data.session){restoreAuthReturnState(data.session);await syncMemberProfile(data.session)}authClient.auth.onAuthStateChange((event,session)=>{showAccount(session);if(event==="SIGNED_IN"){$("authMessage").textContent="";if($("loginDialog").open)$("loginDialog").close();restoreAuthReturnState(session);setTimeout(()=>syncMemberProfile(session),0);toast("로그인했어요")}else if(event==="SIGNED_OUT"){currentProfile=null;profileLoadUser=null;canUseStaffNickname=false;showAccount(null)}})}catch(error){console.error("Supabase Auth initialization failed",error);$("authSummary").textContent="로그인 서비스를 준비하지 못했어요. 새로고침해 주세요."}}
-    async function shareRestaurant(id){const x=restaurants.find(r=>r.id===id);if(!x)return;const data={title:x.name,text:`${x.name} · ${x.address||"서울 맛집"}`,url:location.href};try{if(navigator.share)await navigator.share(data);else{await navigator.clipboard.writeText(location.href);toast("링크를 복사했어요")}}catch{}}
+    async function shareRestaurant(id){const x=restaurants.find(r=>r.id===id);if(!x)return;const data={title:x.name,text:`${x.name} · ${x.address||"서울 맛집"}`,url:`https://myreelsmap.com/places/${encodeURIComponent(x.id)}/`};try{if(navigator.share)await navigator.share(data);else{await navigator.clipboard.writeText(data.url);toast("링크를 복사했어요")}}catch{}}
     function setView(view){if(view==="saved"&&!requireMember({type:"saved"}))return;activeView=view;document.body.dataset.view=view;document.querySelectorAll(".nav-btn").forEach(x=>x.classList.toggle("on",x.dataset.view===view));applyFilters(true);if(view==="map")setTimeout(()=>{if(mapReady){map.relayout();fitMapToMarkers();renderLocationMarker()}},120)}
     document.addEventListener("click",event=>{const reel=event.target.closest("[data-track-reel]"),route=event.target.closest("[data-track-route]");if(reel)trackEngagement(reel.dataset.trackReel,"reel");else if(route)trackEngagement(route.dataset.trackRoute,"route")});
     $("filters").addEventListener("click",event=>{const category=event.target.closest("[data-category]");if(!category)return;activeCategory=category.dataset.category;applyFilters(true)});
@@ -373,8 +394,8 @@
     $("cards").addEventListener("keydown",e=>{if(e.key==="Enter"){const card=e.target.closest("[data-id]");if(card)selectRestaurant(card.dataset.id)}});
     $("searchInput").addEventListener("input",()=>applyFilters(true));$("pagination").addEventListener("click",event=>{const button=event.target.closest("[data-page]");if(!button||button.disabled)return;currentPage=Number(button.dataset.page)||1;render();$("sectionTitle").scrollIntoView({behavior:"smooth",block:"start"})});$("mapLocationBtn").addEventListener("click",()=>userLocation?focusOnLocation():requestLocation(true));$("mapResetBtn").addEventListener("click",fitMapToMarkers);$("placeSheet").addEventListener("click",event=>{if(event.target.closest("[data-sheet-close]"))closePlaceSheet()});$("locationHelp").addEventListener("click",event=>{if(event.target.closest("[data-location-close]"))$("locationHelp").close()});document.querySelectorAll(".nav-btn").forEach(x=>x.addEventListener("click",()=>setView(x.dataset.view)));
     const CACHE_KEY="reelsmap_public_places_v1";
-    function showRecentCache(){try{const cache=JSON.parse(sessionStorage.getItem(CACHE_KEY)||"null");if(cache&&Date.now()-cache.at<60000&&Array.isArray(cache.rows)){restaurants=groupRestaurants(cache.rows);dataReady=true;updateDistances();applyFilters()}}catch{}}
-    async function load(refresh=false){try{const r=await fetch(API,{cache:"no-store"});if(!r.ok)throw new Error("서버 응답 오류");const j=await r.json();if(!j.ok||!Array.isArray(j.restaurants))throw new Error("맛집 목록 오류");restaurants=groupRestaurants(j.restaurants);dataReady=true;loadingError=false;try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),rows:j.restaurants}))}catch{}updateDistances();applyFilters()}catch{if(!refresh&&!dataReady){loadingError=true;applyFilters()}}}
+    function showRecentCache(){try{const cache=JSON.parse(sessionStorage.getItem(CACHE_KEY)||"null");if(cache&&Date.now()-cache.at<60000&&Array.isArray(cache.rows)){restaurants=groupRestaurants(cache.rows);dataReady=true;updateDistances();applyFilters();openRequestedPlace()}}catch{}}
+    async function load(refresh=false){try{const r=await fetch(API,{cache:"no-store"});if(!r.ok)throw new Error("서버 응답 오류");const j=await r.json();if(!j.ok||!Array.isArray(j.restaurants))throw new Error("맛집 목록 오류");restaurants=groupRestaurants(j.restaurants);dataReady=true;loadingError=false;try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),rows:j.restaurants}))}catch{}updateDistances();applyFilters();openRequestedPlace()}catch{if(!refresh&&!dataReady){loadingError=true;applyFilters()}}}
     window.addEventListener("resize",()=>{if(mapReady){map.relayout();fitMapToMarkers()}});const loginUrl=new URL(location.href),openLoginAfterPreview=loginUrl.searchParams.get("openLogin")==="1";if(openLoginAfterPreview){loginUrl.searchParams.delete("openLogin");history.replaceState(history.state,"",loginUrl.pathname+loginUrl.search+loginUrl.hash)}initSocialAuth().then(()=>{trackEngagement(null,"visit");if(openLoginAfterPreview&&!$("openLogin").classList.contains("logout"))$("loginDialog").showModal()});showRecentCache();applyFilters();load();loadKakaoMap();setInterval(()=>load(true),300000);
   </script>
 </body>
