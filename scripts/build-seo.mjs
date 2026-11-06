@@ -76,7 +76,7 @@ function page(row, all) {
 <article class="card"><span class="tag">${esc(row.category || '맛집')}</span><h1>${esc(row.name)}</h1>
 <p><strong>주소</strong> · ${esc(row.address || '매장 주소 확인 중')}</p>
 ${menu.length ? `<h2>등록된 메뉴</h2><ul>${menu.map(name => `<li>${esc(name)}</li>`).join('')}</ul>` : ''}
-${instagram ? `<h2>관련 Instagram 릴스</h2><p>릴스 제작자 ${row.creator_handle ? `@${esc(String(row.creator_handle).replace(/^@/, ''))}` : '정보 없음'}의 공개 게시물로 연결됩니다.</p><p><a href="${esc(instagram)}" target="_blank" rel="noopener noreferrer">Instagram에서 릴스 보기 ↗</a></p>` : ''}
+${instagram ? `<h2>관련 Instagram 릴스</h2><p>릴스 제작자 ${row.creator_handle ? `@${esc(String(row.creator_handle).replace(/^@/, ''))}` : '정보 없음'}의 공개 게시물로 연결됩니다.</p><p><a href="${esc(instagram)}">Instagram에서 릴스 보기 ↗</a></p>` : ''}
 <div class="links"><a href="/?place=${encodeURIComponent(row.id)}">릴스맛집지도에서 보기</a>${Number.isFinite(lat) && Number.isFinite(lng) ? `<a class="secondary" href="${esc(mapUrl)}" target="_blank" rel="noopener noreferrer">카카오맵 길찾기 ↗</a>` : ''}</div></article>
 ${nearby.length ? `<section class="card"><h2>${esc(row.region)}의 다른 맛집</h2><ul class="list">${nearby.map(other => `<li><a href="/places/${other.id}/">${esc(other.name)}<small>${esc(other.address || other.category || '')}</small></a></li>`).join('')}</ul></section>` : ''}
 <p class="muted">매장과 메뉴 정보는 변경될 수 있으니 방문 전 확인해 주세요. 사진·영상은 저장하지 않고 원본 게시물로 연결합니다.</p></main>
