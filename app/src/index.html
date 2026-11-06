@@ -229,7 +229,7 @@
         const start=()=>{if(!window.kakao?.maps){reject(new Error("Kakao Maps SDK unavailable for this origin"));return}window.kakao.maps.load(()=>{try{initKakaoMap();resolve()}catch(error){reject(error)}})};
         if(window.kakao?.maps){start();return}
         const script=document.createElement("script");
-        script.src=`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(KAKAO_JAVASCRIPT_KEY)}&autoload=false`;
+        script.src=`https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(KAKAO_JAVASCRIPT_KEY)}&libraries=services&autoload=false`;
         script.async=true;script.onload=start;script.onerror=()=>reject(new Error("Kakao Maps SDK load failed"));document.head.appendChild(script);
       }).catch(error=>{console.error(error);showMapError()});
     }
@@ -369,14 +369,69 @@
       activeCategory=mapCategory="전체"; activeReelFilter=""; $("searchInput").value="";
       setView("map"); refreshSharedReels(); toast("릴스와 가게를 내 지도에 저장했어요");
     }
+    function mapKakaoCategory(cat){
+      if(!cat) return "식사";
+      if(cat.includes("카페")||cat.includes("디저트")||cat.includes("베이커리")) return "카페·디저트";
+      if(cat.includes("술집")||cat.includes("주점")||cat.includes("호프")||cat.includes("바")||cat.includes("이자카야")) return "술집";
+      if(cat.includes("일식")||cat.includes("초밥")||cat.includes("돈가스")||cat.includes("라멘")) return "일식";
+      if(cat.includes("양식")||cat.includes("피자")||cat.includes("파스타")||cat.includes("버거")) return "양식";
+      return "식사";
+    }
+    let kakaoPlacesService=null;
+    function getKakaoPlaces(){
+      if(!kakaoPlacesService&&window.kakao?.maps?.services?.Places){
+        kakaoPlacesService=new window.kakao.maps.services.Places();
+      }
+      return kakaoPlacesService;
+    }
     function showPlaceMatches() {
       const q=$("placeMatchSearch").value.trim().toLowerCase(), target=$("placeMatchResults"); target.replaceChildren();
       const linked=personalLinks.find(entry=>entry.url===canonicalReel(connectingUrl));
-      const matches=q?restaurants.filter(x => `${x.name} ${x.address}`.toLowerCase().includes(q)).slice(0,15):window.ReelsLinks.matchPlaces(connectingUrl,restaurants);
-      if(!q&&!matches.length){target.textContent=linked?`현재 연결: ${linked.place.name}. 바꿀 가게명을 검색해 주세요.`:dataReady?"가게명을 입력하면 기존 맛집에서 찾을 수 있어요.":"맛집 목록을 불러오는 중이에요. 잠시 후 가게명을 검색해 주세요.";return;}
+      const matches=q?restaurants.filter(x => `${x.name} ${x.address}`.toLowerCase().includes(q)).slice(0,10):window.ReelsLinks.matchPlaces(connectingUrl,restaurants);
+      if(!q&&!matches.length){target.textContent=linked?`현재 연결: ${linked.place.name}. 바꿀 가게명을 검색해 주세요.`:dataReady?"가게명을 입력하면 기존 맛집 및 카카오 장소 검색에서 찾을 수 있어요.":"맛집 목록을 불러오는 중이에요. 잠시 후 가게명을 검색해 주세요.";return;}
       if(!q&&matches.length){const note=document.createElement("p");note.textContent="이 릴스에 등록된 가게예요. 눌러서 내 지도에 저장하세요.";target.append(note);}
-      if (!matches.length) target.textContent="등록된 가게가 없어요. 아래에서 직접 추가할 수 있어요.";
-      for (const place of matches) { const button=document.createElement("button"); button.type="button"; button.className="auth-button"; button.textContent=`${place.name} · ${place.address || "주소 없음"}`; button.addEventListener("click",()=>storeConnection(place)); target.append(button); }
+      for (const place of matches) {
+        const button=document.createElement("button");
+        button.type="button";
+        button.className="auth-button";
+        button.style.cssText="text-align:left;display:flex;flex-direction:column;gap:2px;padding:8px 12px;margin:4px 0";
+        button.innerHTML=`<span style="font-weight:900;color:var(--brand)">✓ ${esc(place.name)}</span><span style="font-size:11px;color:#666">${esc(place.address||"주소 없음")} · ${esc(place.category||"식사")}</span>`;
+        button.addEventListener("click",()=>storeConnection(place));
+        target.append(button);
+      }
+      if(q.length>=2){
+        const placesSvc=getKakaoPlaces();
+        if(placesSvc){
+          placesSvc.keywordSearch(q,(result,status)=>{
+            if(status===window.kakao.maps.services.Status.OK&&Array.isArray(result)&&result.length){
+              const header=document.createElement("p");
+              header.style.cssText="margin:10px 0 4px;font-size:11px;font-weight:900;color:#555";
+              header.textContent="📍 카카오맵 실시간 검색 (눌러서 1초 만에 핀 꽂기)";
+              target.append(header);
+              for(const item of result.slice(0,6)){
+                const btn=document.createElement("button");
+                btn.type="button";
+                btn.className="auth-button";
+                btn.style.cssText="text-align:left;display:flex;flex-direction:column;gap:2px;padding:8px 12px;margin:4px 0;border-color:#ffb7a6";
+                btn.innerHTML=`<span style="font-weight:900;color:var(--ink)">${esc(item.place_name)}</span><span style="font-size:11px;color:#777">${esc(item.road_address_name||item.address_name)} · ${esc(item.category_group_name||item.category_name||"음식점")}</span>`;
+                btn.addEventListener("click",()=>storeConnection({
+                  id:"kakao-"+item.id,
+                  name:item.place_name,
+                  address:item.road_address_name||item.address_name||"서울",
+                  category:mapKakaoCategory(item.category_group_name||item.category_name),
+                  latitude:parseFloat(item.y),
+                  longitude:parseFloat(item.x)
+                }));
+                target.append(btn);
+              }
+            } else if(!matches.length){
+              target.textContent="검색 결과가 없어요. 아래에서 직접 추가할 수 있어요.";
+            }
+          });
+        }
+      } else if(!matches.length){
+        target.textContent="등록된 가게가 없어요. 가게명을 2글자 이상 입력하면 카카오맵에서 검색됩니다.";
+      }
     }
     function openConnection(url) {
       if(!requireMember(()=>openConnection(url)))return;

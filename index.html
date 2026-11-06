@@ -63,22 +63,10 @@
     }
     .menu-line{display:flex;align-items:center;gap:7px;min-width:0;margin:10px 0 3px;padding:8px 0;border-top:1px solid #eee9e5;border-bottom:1px solid #eee9e5;color:#514b47;font-size:11px;font-weight:750;line-height:1.2;white-space:nowrap;overflow:hidden}.menu-line strong{flex:0 0 auto;color:var(--brand-dark);font-size:10px}.menu-items{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis}
   
-    .reel-dialog{border:0;border-radius:24px;padding:0;width:min(440px,calc(100% - 24px));max-height:92vh;box-shadow:0 25px 90px #0008;background:#18191b;color:#fff;overflow:hidden}
-    .reel-dialog::backdrop{background:#000000b3;backdrop-filter:blur(6px)}
-    .reel-dialog-inner{display:flex;flex-direction:column;height:100%;max-height:88vh}
-    .reel-dialog-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid #2d2e33}
-    .reel-dialog-title{display:flex;flex-direction:column;gap:3px;min-width:0}
-    .reel-badge{display:inline-block;font-size:10px;font-weight:900;color:#ff4d2e;text-transform:uppercase;letter-spacing:0.5px}
-    .reel-dialog-title b{font-size:15px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .reel-close-btn{width:32px;height:32px;border:0;border-radius:10px;background:#2d2e33;color:#fff;font-size:15px;display:grid;place-items:center;cursor:pointer}
-    .reel-close-btn:hover{background:#3d3f46}
-    .reel-iframe-wrap{width:100%;height:580px;background:#000;display:flex;align-items:center;justify-content:center}
-    .reel-embed-frame{width:100%;height:100%;border:0}
     .reel-btn.preview{background:linear-gradient(135deg,#ff4d2e,#ff7900);color:#fff;border-color:transparent;font-weight:900}
     .reel-btn.preview:hover{opacity:0.95}
-    .visual.has-reel{cursor:pointer}
-    .play-icon-overlay{position:absolute;inset:0;background:#00000030;display:flex;align-items:center;justify-content:center;transition:.15s}
-    .visual:hover .play-icon-overlay{background:#00000050}
+    .play-icon-overlay{position:absolute;inset:0;background:#00000028;display:flex;align-items:center;justify-content:center;transition:.15s;text-decoration:none}
+    .visual:hover .play-icon-overlay{background:#00000045}
     .play-icon-overlay svg{width:22px;height:22px;fill:#fff;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.5))}
 
   </style>
@@ -142,20 +130,6 @@
   <div id="toast" class="toast"></div>
   <dialog id="loginDialog"><div class="location-help"><h2>회원가입 · 로그인</h2><p id="authSummary" class="auth-summary">로그인하면 저장한 맛집을 계정과 연결할 수 있어요.</p><div class="auth-entry"><button id="kakaoLogin" class="auth-button kakao" type="button">카카오로 계속하기</button><button id="googleLogin" class="auth-button google" type="button"><span class="google-mark" aria-hidden="true">G</span>Google로 계속하기</button><p id="authMessage" class="auth-error" role="status"></p><button id="closeLogin" class="auth-button" type="button">닫기</button></div></div></dialog>
   <dialog id="profileDialog"><div class="location-help"><h2 id="profileTitle">회원 정보 입력</h2><p id="profileIntro" class="auth-summary">가입을 마치려면 아래 정보를 입력해 주세요.</p><form id="profileForm" class="profile-form"><label for="profileFullName">이름<input id="profileFullName" name="full_name" autocomplete="name" maxlength="80" required></label><label for="profilePhone">전화번호<input id="profilePhone" name="phone_number" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" placeholder="010-1234-5678" required></label><label for="profileBirthDate">생일<input id="profileBirthDate" name="birth_date" type="date" autocomplete="bday" min="1900-01-01" required></label><label for="profileNickname">닉네임<input id="profileNickname" name="nickname" autocomplete="nickname" minlength="2" maxlength="16" pattern="[가-힣A-Za-z0-9_-]{2,16}" placeholder="2~16자, 한글·영문·숫자" required></label><label class="profile-consent"><input id="profileConsent" type="checkbox" required><span>이름·전화번호·생일·닉네임을 회원정보 관리 및 서비스 개선 목적으로 수집·이용하는 데 동의합니다. <a href="./policy.html#privacy" target="_blank" rel="noopener">개인정보처리방침</a></span></label><label class="profile-consent"><input id="visitTrackingConsent" type="checkbox"><span>선택 동의: 로그인한 동안 사이트 방문 일시를 내 계정에 연결해 기록합니다. 관리자는 회원관리에서 기간별 방문 횟수와 일시를 확인할 수 있습니다. 동의하지 않아도 가입할 수 있습니다. <a href="./policy.html#privacy" target="_blank" rel="noopener">자세히 보기</a></span></label><label id="kakaoMarketingLabel" class="profile-consent hidden"><input id="kakaoMarketingConsent" type="checkbox"><span>선택 동의: 릴스맵에서 카카오톡으로 광고·혜택 소식을 보내는 데 동의합니다. 가입에 필수는 아니며 회원정보 수정에서 언제든 철회할 수 있습니다. 실제 발송은 카카오톡 채널 등 별도 연결 후에만 가능합니다. <a href="./policy.html#privacy" target="_blank" rel="noopener">자세히 보기</a></span></label><p id="profileMessage" class="auth-error" role="status"></p><button id="profileSave" class="profile-save" type="submit">저장하고 계속하기</button><button id="profileLogout" class="auth-button" type="button">로그아웃</button></form></div></dialog>
-    <dialog id="reelPreviewDialog" class="reel-dialog">
-    <div class="reel-dialog-inner">
-      <div class="reel-dialog-header">
-        <div class="reel-dialog-title">
-          <span class="reel-badge">Instagram Reel 공식 미리보기</span>
-          <b id="previewPlaceName">맛집 이름</b>
-        </div>
-        <button id="closeReelPreview" class="reel-close-btn" type="button" aria-label="닫기">✕</button>
-      </div>
-      <div class="reel-iframe-wrap">
-        <iframe id="reelEmbedFrame" class="reel-embed-frame" src="" allowtransparency="true" frameborder="0" scrolling="no" allowfullscreen="true"></iframe>
-      </div>
-    </div>
-  </dialog>
   <dialog id="locationHelp"><div class="location-help"><h2>위치 권한을 켜주세요</h2><p id="locationHelpReason">현재 브라우저에서 위치를 확인하지 못했습니다.</p><ol><li>아이폰·아이패드: 설정 → 개인정보 보호 및 보안 → 위치 서비스 → Safari 웹사이트 → 앱을 사용하는 동안</li><li>안드로이드: 설정 → 위치 → 앱 권한 → 현재 브라우저 → 앱 사용 중에만 허용</li><li>설정을 바꾼 뒤 이 화면으로 돌아와 현위치 버튼을 다시 눌러주세요.</li></ol><button type="button" data-location-close>확인</button></div></dialog>
   <script>
     const API="https://tbyfoxsyadmpeeatyzvm.supabase.co/functions/v1/site-data";
@@ -191,7 +165,7 @@
     const categoryClass=x=>categoryClasses[x.category]||"cat-meal";
     const categoryIcon=x=>`<svg class="category-icon" viewBox="0 0 24 24" aria-hidden="true">${categoryIcons[x.category]||categoryIcons["식사"]}</svg>`;
     const cardImage=x=>/^https:\/\//i.test(String(x.image_url||""))?String(x.image_url):"";
-    const cardVisual=(x,i)=>{const image=cardImage(x);const firstReel=x.reels&&x.reels[0]?x.reels[0].url:"";return `<div class="visual ${categoryClass(x)} ${image?"has-photo":""} ${firstReel?"has-reel":""}" ${firstReel?`data-preview-reel="${esc(firstReel)}" data-place-name="${esc(x.name)}" title="릴스 미리보기"`:""}><span class="rank">#${i+1}</span>${image?`<img class="visual-photo" src="${esc(image)}" alt="${esc(x.name)} 대표 음식 사진" loading="lazy" decoding="async">`:""}${categoryIcon(x)}${firstReel?`<div class="play-icon-overlay"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div>`:""}</div>`};
+    const cardVisual=(x,i)=>{const image=cardImage(x);const firstReel=x.reels&&x.reels[0]?x.reels[0].url:"";return `<div class="visual ${categoryClass(x)} ${image?"has-photo":""}"><span class="rank">#${i+1}</span>${image?`<img class="visual-photo" src="${esc(image)}" alt="${esc(x.name)} 대표 음식 사진" loading="lazy" decoding="async">`:""}${categoryIcon(x)}${firstReel?`<a class="play-icon-overlay" href="${esc(firstReel)}" target="_blank" rel="noopener" aria-label="Instagram에서 릴스 보기" onclick="event.stopPropagation()"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></a>`:""}</div>`};
     const validSignal=signal=>signal&&typeof signal==="object";
     const reelSignals=x=>(x.reels||[]).map(reel=>reel.reel_signal).filter(validSignal);
     const matchesReelFilter=(x,key=activeReelFilter)=>key==="all"||key==="million"&&reelSignals(x).some(signal=>signal.million_reached===true);
@@ -282,7 +256,7 @@
     function renderPlaceSheet(x){
       const distance=userLocation&&Number.isFinite(x.distance)?` · 내 위치에서 ${distanceLabel(x.distance)}`:"";
       const firstReel=x.reels?.[0],creator=creatorAttribution(x);
-      $("placeSheet").innerHTML=`<button class="sheet-close" type="button" data-sheet-close aria-label="닫기">×</button><h3>${esc(x.name)}</h3><div class="sheet-address">📍 ${esc(x.address||"서울")}</div>${creator?`<div class="creator-line">${creator}</div>`:""}<div class="sheet-tags"><span class="tag accent">${esc(x.category||"식사")}</span><span class="tag">관련 릴스 ${x.reels.length}개${esc(distance)}</span>${signalBadges(x)}<span class="tag route-proof">최근 7일 길찾기 약 ${Number(x.route_clicks_7d||0).toLocaleString("ko-KR")}회</span></div>${menuLine(x)}<div class="sheet-actions"><a class="route" href="${kakaoRouteUrl(x)}" target="_blank" rel="noopener" data-track-route="${esc(x.id)}">길찾기 ↗</a>${firstReel?`<button class="reel" type="button" data-preview-reel="${esc(firstReel.url)}" data-place-name="${esc(x.name)}">▶ 릴스 재생</button>`:`<a class="reel" href="https://map.kakao.com/link/map/${encodeURIComponent(x.name)},${Number(x.latitude)},${Number(x.longitude)}" target="_blank" rel="noopener">지도에서 보기</a>`}</div>`;
+      $("placeSheet").innerHTML=`<button class="sheet-close" type="button" data-sheet-close aria-label="닫기">×</button><h3>${esc(x.name)}</h3><div class="sheet-address">📍 ${esc(x.address||"서울")}</div>${creator?`<div class="creator-line">${creator}</div>`:""}<div class="sheet-tags"><span class="tag accent">${esc(x.category||"식사")}</span><span class="tag">관련 릴스 ${x.reels.length}개${esc(distance)}</span>${signalBadges(x)}<span class="tag route-proof">최근 7일 길찾기 약 ${Number(x.route_clicks_7d||0).toLocaleString("ko-KR")}회</span></div>${menuLine(x)}<div class="sheet-actions"><a class="route" href="${kakaoRouteUrl(x)}" target="_blank" rel="noopener" data-track-route="${esc(x.id)}">길찾기 ↗</a>${firstReel?`<a class="reel" href="${esc(firstReel.url)}" data-track-reel="${esc(firstReel.id)}" target="_blank" rel="noopener">관련 릴스 보기 ↗</a>`:`<a class="reel" href="https://map.kakao.com/link/map/${encodeURIComponent(x.name)},${Number(x.latitude)},${Number(x.longitude)}" target="_blank" rel="noopener">지도에서 보기</a>`}</div>`;
       $("placeSheet").classList.remove("hidden");
     }
     function focusOnLocation(){if(!mapReady||!userLocation)return;map.panTo(new kakao.maps.LatLng(userLocation.lat,userLocation.lng));map.setLevel(5)}
@@ -312,7 +286,7 @@
     function renderRestaurantCard(x,index){
       const reelsStack=x.reels.length>1?`<div class="reels-stack"><div class="reels-title">이 매장의 관련 릴스 · 먼저 등록된 순서</div>${x.reels.map((reel,n)=>`<a class="reel-row" href="${esc(reel.url||"#")}" data-track-reel="${esc(reel.id)}"><span class="reel-index">${esc(creatorName(reel))}</span><span class="reel-source">관련 릴스 ${n+1} · Instagram에서 보기</span>${reelMetric(reel)?`<span class="reel-metric">${esc(reelMetric(reel))}</span>`:""}<span class="reel-arrow">↗</span></a>`).join("")}</div>`:"";
       const saveButton=activeView==="saved"?`<button class="reel-btn" type="button" data-save="${x.id}" aria-label="저장 취소">저장 취소</button>`:`<button class="icon-btn ${saved.has(String(x.id))?"saved":""}" data-save="${x.id}" aria-label="${saved.has(String(x.id))?"저장 취소":"저장"}">${saved.has(String(x.id))?"♥":"♡"}</button>`;
-      return `<article class="card ${activeId===x.id?"active":""}" data-id="${x.id}" tabindex="0"><div class="card-top">${cardVisual(x,index)}<div><h3>${esc(x.name)}</h3><div class="address">📍 ${esc(x.address||"서울")}</div><div class="tags"><span class="tag accent">${esc(x.category||"식사")}</span><span class="tag">${esc(x.region||"서울")}</span>${userLocation&&Number.isFinite(x.distance)?`<span class="tag distance">내 위치에서 ${distanceLabel(x.distance)}</span>`:""}<span class="tag">관련 릴스 ${x.reels.length}개</span>${signalBadges(x)}</div></div></div>${menuLine(x)}${creatorAttribution(x)?`<div class="creator-line">${creatorAttribution(x)}</div>`:""}${reelsStack}<div class="card-foot"><div class="stats"><span>✓ 위치 확인</span><span>릴스 ${x.reels.length}개</span><span class="route-proof">최근 7일 길찾기 약 ${Number(x.route_clicks_7d||0).toLocaleString("ko-KR")}회</span></div><div class="card-actions">${saveButton}<button class="icon-btn" data-share="${x.id}" aria-label="공유">↗</button><a class="reel-btn" href="/places/${encodeURIComponent(x.id)}/">상세 정보</a>${x.reels[0]?`<button class="reel-btn preview" type="button" data-preview-reel="${esc(x.reels[0].url)}" data-place-name="${esc(x.name)}">▶ 릴스 재생</button><a class="reel-btn" href="${esc(x.reels[0].url)}" data-track-reel="${esc(x.reels[0].id)}" target="_blank" rel="noopener">인스타 열기 ↗</a>`:""}</div></div></article>`;
+      return `<article class="card ${activeId===x.id?"active":""}" data-id="${x.id}" tabindex="0"><div class="card-top">${cardVisual(x,index)}<div><h3>${esc(x.name)}</h3><div class="address">📍 ${esc(x.address||"서울")}</div><div class="tags"><span class="tag accent">${esc(x.category||"식사")}</span><span class="tag">${esc(x.region||"서울")}</span>${userLocation&&Number.isFinite(x.distance)?`<span class="tag distance">내 위치에서 ${distanceLabel(x.distance)}</span>`:""}<span class="tag">관련 릴스 ${x.reels.length}개</span>${signalBadges(x)}</div></div></div>${menuLine(x)}${creatorAttribution(x)?`<div class="creator-line">${creatorAttribution(x)}</div>`:""}${reelsStack}<div class="card-foot"><div class="stats"><span>✓ 위치 확인</span><span>릴스 ${x.reels.length}개</span><span class="route-proof">최근 7일 길찾기 약 ${Number(x.route_clicks_7d||0).toLocaleString("ko-KR")}회</span></div><div class="card-actions">${saveButton}<button class="icon-btn" data-share="${x.id}" aria-label="공유">↗</button><a class="reel-btn" href="/places/${encodeURIComponent(x.id)}/">상세 정보</a>${x.reels[0]?`<a class="reel-btn preview" href="${esc(x.reels[0].url)}" data-track-reel="${esc(x.reels[0].id)}" target="_blank" rel="noopener">▶ 릴스 보기 ↗</a>`:""}</div></div></article>`;
     }
     function render(){
       const totalPages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE)),pageStart=(currentPage-1)*PAGE_SIZE,pageRows=filtered.slice(pageStart,pageStart+PAGE_SIZE);
@@ -431,39 +405,6 @@
     async function load(refresh=false){try{const r=await fetch(API,{cache:"no-store"});if(!r.ok)throw new Error("서버 응답 오류");const j=await r.json();if(!j.ok||!Array.isArray(j.restaurants))throw new Error("맛집 목록 오류");restaurants=groupRestaurants(j.restaurants);dataReady=true;loadingError=false;try{sessionStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),rows:j.restaurants}))}catch{}updateDistances();applyFilters();openRequestedPlace()}catch{if(!refresh&&!dataReady){loadingError=true;applyFilters()}}}
     window.addEventListener("resize",()=>{if(mapReady){map.relayout();fitMapToMarkers()}});const loginUrl=new URL(location.href),openLoginAfterPreview=loginUrl.searchParams.get("openLogin")==="1";if(openLoginAfterPreview){loginUrl.searchParams.delete("openLogin");history.replaceState(history.state,"",loginUrl.pathname+loginUrl.search+loginUrl.hash)}initSocialAuth().then(()=>{trackEngagement(null,"visit");if(openLoginAfterPreview&&!$("openLogin").classList.contains("logout"))$("loginDialog").showModal()});showRecentCache();applyFilters();load();loadKakaoMap();setInterval(()=>load(true),300000);
   
-    function openReelPreview(rawUrl, placeName){
-      const dialog=$("reelPreviewDialog"), frame=$("reelEmbedFrame"), title=$("previewPlaceName");
-      if(!dialog||!frame) return;
-      let embedUrl = rawUrl;
-      try {
-        const u = new URL(rawUrl);
-        const parts = u.pathname.split("/").filter(Boolean);
-        if(parts.length >= 2 && (parts[0] === "reel" || parts[0] === "p" || parts[0] === "reels")){
-          embedUrl = `https://www.instagram.com/${parts[0] === "reels" ? "reel" : parts[0]}/${parts[1]}/embed/`;
-        }
-      } catch(e){}
-      title.textContent = placeName || "관련 Instagram 릴스";
-      frame.src = embedUrl;
-      dialog.showModal();
-    }
-    function closeReelPreview(){
-      const dialog=$("reelPreviewDialog"), frame=$("reelEmbedFrame");
-      if(frame) frame.src="";
-      if(dialog) dialog.close();
-    }
-    $("closeReelPreview")?.addEventListener("click", closeReelPreview);
-    $("reelPreviewDialog")?.addEventListener("click", e=>{
-      if(e.target===$("reelPreviewDialog")) closeReelPreview();
-    });
-    document.addEventListener("click", e=>{
-      const target = e.target.closest("[data-preview-reel]");
-      if(target){
-        e.stopPropagation();
-        e.preventDefault();
-        openReelPreview(target.dataset.previewReel, target.dataset.placeName);
-      }
-    });
-
   </script>
 </body>
 </html>
