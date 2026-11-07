@@ -362,10 +362,12 @@ function card(item, index) {
     <p class="summary">${esc(item.summary)}</p>
     ${tags ? `<div class="tags">${tags}</div>` : ""}
     <div class="actions">
-      <a class="btn btn-buy" href="${esc(item.buyUrl)}" target="_blank" rel="noopener noreferrer sponsored">
+      <a class="btn btn-buy" href="${esc(item.buyUrl)}" target="_blank" rel="noopener noreferrer sponsored"
+         aria-label="${esc(item.no)}번 ${esc(item.title)} 쿠팡 최저가 확인">
         쿠팡 최저가 확인 <span class="arrow">↗</span>
       </a>
-      <a class="btn btn-video" href="${esc(item.videoUrl)}" target="_blank" rel="noopener noreferrer">
+      <a class="btn btn-video" href="${esc(item.videoUrl)}" target="_blank" rel="noopener noreferrer"
+         aria-label="${esc(item.no)}번 ${esc(item.title)} 관련 쇼츠 영상 보기">
         <span class="play"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg></span>
         관련 쇼츠 영상 보기 🎬
       </a>
