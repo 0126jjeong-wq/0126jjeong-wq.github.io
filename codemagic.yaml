@@ -53,7 +53,10 @@ workflows:
       - name: Build signed iOS app
         script: |
           cd app/ios/App
-          xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME"
+          ios_build_number=$((${PROJECT_BUILD_NUMBER:?Missing Codemagic project build number} + 1))
+          echo "iOS build number: $ios_build_number"
+          xcode-project build-ipa --workspace "$XCODE_WORKSPACE" --scheme "$XCODE_SCHEME" \
+            --archive-xcargs "COMPILER_INDEX_STORE_ENABLE=NO CURRENT_PROJECT_VERSION=$ios_build_number"
     artifacts:
       - app/ios/App/build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
