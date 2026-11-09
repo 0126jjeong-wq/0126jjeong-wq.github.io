@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#ff4d2e">
-  <meta name="reelsmap-build" content="2026-10-22-compact-app-ui-v2">
+  <meta name="reelsmap-build" content="2026-11-10-ios-ui-v3">
   <meta name="description" content="위치가 확인된 서울 맛집을 지도에서 찾고 관련 Instagram 릴스로 분위기를 확인하세요.">
-  <meta property="og:title" content="릴스맛집지도">
+  <meta property="og:title" content="릴스맵">
   <meta property="og:description" content="릴스로 먼저 보고, 지도에서 바로 찾는 서울 맛집 큐레이션">
-  <title>릴스맛집지도 | 서울 맛집을 릴스와 지도로</title>
+  <title>릴스맵 | 릴스로 찾는 내 주변 맛집</title>
   <link rel="preconnect" href="https://dapi.kakao.com">
   <link rel="preconnect" href="https://t1.daumcdn.net">
   <link rel="stylesheet" href="./vendor/leaflet.css">
@@ -52,11 +52,34 @@
     @media(min-width:761px){body{padding-bottom:70px}.bottom-nav{position:fixed;display:grid;grid-template-columns:repeat(4,1fr);left:0;right:0;bottom:0;height:64px;background:#fff;border-top:1px solid var(--line);z-index:2000}.nav-btn{border:0;background:none;color:#87898e;font-size:12px;display:grid;place-items:center}.nav-btn i{font-style:normal;font-size:20px}.nav-btn.on{color:var(--brand)}body[data-view="register"] .registration-view{display:block}body[data-view="register"] .main-intro,body[data-view="register"] .filter-groups,body[data-view="register"] .section-head,body[data-view="register"] .sort-note,body[data-view="register"] .cards,body[data-view="register"] .pagination{display:none}}
 
     .recommendations-view{display:none;padding:20px;max-width:720px;margin:auto;width:100%}.recommendations-view h1{font-size:24px}.recommendations-view p{font-size:13px;line-height:1.6;color:var(--muted)}.recommendation-orders{display:flex;gap:8px;margin:18px 0}.recommendation-card{padding:18px;background:white;border:1px solid var(--line);border-radius:18px;margin:12px 0}.recommendation-card h2{font-size:18px;margin:8px 0}.prototype-label{display:inline-block;background:#fff0e9;color:#b33b20;padding:6px 10px;border-radius:8px;font-size:12px;font-weight:800}.library-tools{display:none;padding:12px 0;gap:8px}.bottom-nav{grid-template-columns:repeat(3,1fr)!important}body[data-view="saved"] .library-tools{display:flex}body[data-view="recommendations"] .feed,body[data-view="recommendations"] .map-wrap{display:none!important}body[data-view="recommendations"] .recommendations-view{display:block}body[data-view="recommendations"] .layout{display:block}body[data-view="recommendations"] .search{display:none}
+  
+    .map-cluster{width:48px;height:48px;border:3px solid #fff;border-radius:50%;background:#17181b;color:#fff;box-shadow:0 6px 20px #0004;font-size:14px;font-weight:950;cursor:pointer}
+    .map-cluster:active{transform:scale(.94)}
+    @media(max-width:900px){
+      html,body{height:100%;height:100dvh}
+      body{display:flex;flex-direction:column;overflow:hidden;padding:0}
+      .topbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;height:auto;min-height:0;padding:max(9px,env(safe-area-inset-top)) 14px 10px;flex:0 0 auto}
+      .brand{min-width:0;overflow:hidden;gap:9px}.brand-mark{flex:0 0 38px;width:38px;height:38px}.brand-name{min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:17px}
+      .top-count{display:none!important}.account-area{margin:0;justify-self:end}.account-button,.account-nickname{min-height:38px}
+      .search{grid-column:1/-1;order:0;width:100%;margin:0}.search input{height:44px}
+      .layout{display:block;flex:1 1 auto;height:auto;min-height:0}
+      .feed,.map-wrap{height:100%;min-height:0}
+      body[data-view="map"] .feed{display:none!important}body[data-view="map"] .map-wrap{display:block!important}
+      body[data-view="saved"] .feed{display:block!important}body[data-view="saved"] .map-wrap{display:none!important}
+      body[data-view="recommendations"] .feed,body[data-view="recommendations"] .map-wrap{display:none!important}
+      body[data-view="recommendations"] .layout{display:block}
+      body[data-view="register"] .feed{display:block!important}body[data-view="register"] .map-wrap{display:none!important}
+      .bottom-nav{position:relative;left:auto;right:auto;bottom:auto;flex:0 0 auto;height:calc(64px + env(safe-area-inset-bottom));padding:5px 10px env(safe-area-inset-bottom);grid-template-columns:repeat(3,1fr)!important}
+      .map-card{top:10px;left:10px;max-width:calc(100% - 20px);gap:5px}.map-category-filter{left:10px;right:10px;top:66px}
+      .map-tools{right:10px;bottom:12px}.place-sheet{left:10px;right:10px;bottom:10px}
+      .toast{bottom:calc(74px + env(safe-area-inset-bottom))}
+    }
+
   </style>
 </head>
 <body data-view="map">
   <header class="topbar">
-    <a class="brand" href="./" aria-label="릴스맛집지도 홈"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" width="27" height="27" role="img" aria-label="릴스 맛집 지도"><path fill="#fff" d="M32 3.5C17.1 3.5 5 15.6 5 30.5c0 18.3 27 32.8 27 32.8s27-14.5 27-32.8C59 15.6 46.9 3.5 32 3.5Z"/><circle cx="32" cy="28" r="11.5" fill="#ff4d2e"/><path fill="#fff" d="M29 21.8c-.7-.4-1.6.1-1.6 1v10.4c0 .9.9 1.4 1.6 1l8.4-5.2c.7-.4.7-1.5 0-1.9l-8.4-5.3Z"/></svg></span><span class="brand-name">릴스맛집지도</span></a>
+    <a class="brand" href="./" aria-label="릴스맵 홈"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" width="27" height="27" role="img" aria-label="릴스 맛집 지도"><path fill="#fff" d="M32 3.5C17.1 3.5 5 15.6 5 30.5c0 18.3 27 32.8 27 32.8s27-14.5 27-32.8C59 15.6 46.9 3.5 32 3.5Z"/><circle cx="32" cy="28" r="11.5" fill="#ff4d2e"/><path fill="#fff" d="M29 21.8c-.7-.4-1.6.1-1.6 1v10.4c0 .9.9 1.4 1.6 1l8.4-5.2c.7-.4.7-1.5 0-1.9l-8.4-5.3Z"/></svg></span><span class="brand-name">릴스맵</span></a>
     <div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="가게명, 동네, 음식으로 검색" aria-label="맛집 검색"></div>
     <div class="top-count">서울 맛집 <b id="topCount">불러오는 중</b></div>
     <div class="account-area"><button id="accountNickname" class="account-nickname hidden" type="button" aria-label="회원 정보 수정"></button><button id="openLogin" class="account-button" type="button">로그인</button></div>
@@ -240,7 +263,7 @@
       map.addControl(new kakao.maps.MapTypeControl(),kakao.maps.ControlPosition.TOPRIGHT);
       map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
       kakao.maps.event.addListener(map,"click",closePlaceSheet);
-      kakao.maps.event.addListener(map,"zoom_changed",updateMarkerAppearances);
+      kakao.maps.event.addListener(map,"zoom_changed",()=>renderMarkers(false));
       mapReady=true;$("mapError").classList.add("hidden");renderMarkers();renderLocationMarker();
     }
     function closePlaceSheet(){activeId=null;$("placeSheet").classList.add("hidden");document.querySelectorAll(".card").forEach(c=>c.classList.remove("active"));markerById.forEach(item=>item.button.classList.remove("active"))}
@@ -300,16 +323,31 @@
       const photo=button.querySelector("img");if(photo)photo.addEventListener("error",()=>{button.dataset.photoBroken="1";updateMarkerAppearance(button,x)},{once:true});
     }
     function updateMarkerAppearances(){markerById.forEach(item=>updateMarkerAppearance(item.button,item.restaurant))}
-    function renderMarkers(){
+    function renderMarkers(shouldFit=true){
       markerOverlays.forEach(overlay=>overlay.setMap(null));markerOverlays=[];markerById.clear();if(!mapReady)return;
+      const level=map.getLevel(),step=level>=8?.045:level>=6?.018:level>=4?.006:0;
+      const groups=new Map();
       mapFiltered.forEach(x=>{
         const lat=Number(x.latitude),lng=Number(x.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
-        const position=new kakao.maps.LatLng(lat,lng),button=document.createElement("button");button.type="button";button.setAttribute("aria-label",`${x.name} · ${x.category||"식당"} 지도 마커`);updateMarkerAppearance(button,x);
+        const key=step?Math.floor(lat/step)+":"+Math.floor(lng/step):String(x.id);
+        if(!groups.has(key))groups.set(key,[]);groups.get(key).push({x,lat,lng});
+      });
+      groups.forEach(group=>{
+        const lat=group.reduce((sum,item)=>sum+item.lat,0)/group.length,lng=group.reduce((sum,item)=>sum+item.lng,0)/group.length;
+        const position=new kakao.maps.LatLng(lat,lng);
+        if(group.length>1){
+          const button=document.createElement("button");button.type="button";button.className="map-cluster";button.textContent=String(group.length);
+          button.setAttribute("aria-label",`이 근처 맛집 ${group.length}곳 보기`);
+          button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();kakao.maps.event.preventMap();map.panTo(position);map.setLevel(Math.max(3,level-2))});
+          markerOverlays.push(new kakao.maps.CustomOverlay({map,position,content:button,xAnchor:.5,yAnchor:.5,zIndex:20}));
+          return;
+        }
+        const {x}=group[0],button=document.createElement("button");button.type="button";button.setAttribute("aria-label",`${x.name} · ${x.category||"식당"} 지도 마커`);updateMarkerAppearance(button,x);
         button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();kakao.maps.event.preventMap();selectRestaurant(x.id,false)});
         const overlay=new kakao.maps.CustomOverlay({map,position,content:button,xAnchor:.5,yAnchor:1.08,zIndex:String(activeId)===String(x.id)?12:8});
         markerOverlays.push(overlay);markerById.set(String(x.id),{overlay,button,position,restaurant:x});
       });
-      fitMapToMarkers();renderLocationMarker();
+      if(shouldFit)fitMapToMarkers();renderLocationMarker();
     }
     function focusRestaurant(id){
       if(!mapReady)return;const item=markerById.get(String(id)),x=mapFiltered.find(row=>String(row.id)===String(id));if(!item||!x)return;
