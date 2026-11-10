@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#ff4d2e">
-  <meta name="reelsmap-build" content="2026-11-10-ios-ui-v3">
+  <meta name="reelsmap-build" content="2026-11-10-ios-launch-v1">
   <meta name="description" content="위치가 확인된 서울 맛집을 지도에서 찾고 관련 Instagram 릴스로 분위기를 확인하세요.">
   <meta property="og:title" content="릴스맵">
   <meta property="og:description" content="릴스로 먼저 보고, 지도에서 바로 찾는 서울 맛집 큐레이션">
@@ -104,11 +104,83 @@
     @media(prefers-reduced-motion:reduce){
       .card,.toast{transition:none}.card:hover,.card.active{transform:none}
     }
+
+    .app-launch {
+      position: fixed;
+      inset: 0;
+      z-index: 4000;
+      display: grid;
+      place-items: center;
+      background: #fff;
+      opacity: 1;
+      transition: opacity 200ms ease-out;
+    }
+    .app-launch.is-leaving { opacity: 0; pointer-events: none; }
+    .app-launch-brand {
+      display: grid;
+      justify-items: center;
+      gap: 16px;
+      font-size: 27px;
+      font-weight: 900;
+      letter-spacing: -0.9px;
+      animation: app-logo-arrive 480ms both;
+    }
+    .app-launch-mark {
+      display: grid;
+      place-items: center;
+      width: 88px;
+      height: 88px;
+      border-radius: 27px;
+      background: var(--brand);
+      box-shadow: 0 12px 30px #ff4d2e35;
+    }
+    @keyframes app-logo-arrive {
+      0% { opacity: 0; transform: scale(.76); }
+      65% { opacity: 1; transform: scale(1.06); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .app-launch { transition: none; }
+      .app-launch-brand { animation: none; }
+    }
   </style>
 </head>
 <body data-view="map">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="reelsmap-logo" viewBox="0 0 64 64"><path fill="#fff" d="M32 3.5C17.1 3.5 5 15.6 5 30.5c0 18.3 27 32.8 27 32.8s27-14.5 27-32.8C59 15.6 46.9 3.5 32 3.5Z"/><circle cx="32" cy="28" r="11.5" fill="#ff4d2e"/><path fill="#fff" d="M29 21.8c-.7-.4-1.6.1-1.6 1v10.4c0 .9.9 1.4 1.6 1l8.4-5.2c.7-.4.7-1.5 0-1.9l-8.4-5.3Z"/></symbol>
+  </svg>
+  <div id="appLaunch" class="app-launch hidden" aria-hidden="true">
+    <div class="app-launch-brand">
+      <span class="app-launch-mark"><svg width="52" height="52" viewBox="0 0 64 64"><use href="#reelsmap-logo"/></svg></span>
+      <span>마이릴스맵</span>
+    </div>
+  </div>
+  <script>
+    (() => {
+      if (location.protocol !== "capacitor:") return;
+      const splash = document.getElementById("appLaunch");
+      const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const startedAt = performance.now();
+      splash.classList.remove("hidden");
+
+      function finish() {
+        if (splash.classList.contains("is-leaving")) return;
+        clearTimeout(deadline);
+        splash.classList.add("is-leaving");
+        if (reducedMotion) splash.remove();
+        else setTimeout(() => splash.remove(), 200);
+      }
+
+      // Let the map show its existing loading/error state on a slow connection.
+      const deadline = setTimeout(finish, 1400);
+      window.addEventListener("reelsmap:startup-ready", () => {
+        const minimum = reducedMotion ? 0 : 680;
+        setTimeout(finish, Math.max(0, minimum - (performance.now() - startedAt)));
+      }, { once: true });
+    })();
+  </script>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="릴스맵 홈"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" width="27" height="27" role="img" aria-label="릴스 맛집 지도"><path fill="#fff" d="M32 3.5C17.1 3.5 5 15.6 5 30.5c0 18.3 27 32.8 27 32.8s27-14.5 27-32.8C59 15.6 46.9 3.5 32 3.5Z"/><circle cx="32" cy="28" r="11.5" fill="#ff4d2e"/><path fill="#fff" d="M29 21.8c-.7-.4-1.6.1-1.6 1v10.4c0 .9.9 1.4 1.6 1l8.4-5.2c.7-.4.7-1.5 0-1.9l-8.4-5.3Z"/></svg></span><span class="brand-name">릴스맵</span></a>
+    <a class="brand" href="./" aria-label="릴스맵 홈"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" width="27" height="27" role="img" aria-label="릴스 맛집 지도"><use href="#reelsmap-logo"/></svg></span><span class="brand-name">릴스맵</span></a>
     <div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="가게명, 동네, 음식으로 검색" aria-label="맛집 검색"></div>
     <div class="top-count">서울 맛집 <b id="topCount">불러오는 중</b></div>
     <div class="account-area"><button id="accountNickname" class="account-nickname hidden" type="button" aria-label="회원 정보 수정"></button><button id="openLogin" class="account-button" type="button">로그인</button></div>
@@ -635,7 +707,11 @@
     $("googleLogin").addEventListener("click",()=>startSocialLogin("google"));$("kakaoLogin").addEventListener("click",()=>startSocialLogin("kakao"));$("closeLogin").addEventListener("click",()=>$("loginDialog").close());
     $("profileForm").addEventListener("submit",saveMemberProfile);$("profileLogout").addEventListener("click",async()=>{const{error}=await authClient.auth.signOut();if(error)toast("로그아웃하지 못했어요");else toast("로그아웃했어요")});$("profileDialog").addEventListener("cancel",event=>{if(!currentProfile)event.preventDefault()});
     async function load(refresh=false){try{const r=await fetch(API+"?t="+Date.now());if(!r.ok)throw new Error(`HTTP ${r.status}`);const j=await r.json();if(!j.ok||!Array.isArray(j.restaurants))throw new Error("Invalid site data");restaurants=groupRestaurants(j.restaurants);dataReady=true;loadingError=false;updateDistances();applyFilters();if($("connectReelDialog").open)showPlaceMatches()}catch(error){console.error("Restaurant data load failed",error);if(!refresh&&!dataReady){loadingError=true;applyFilters()}}}
-    window.addEventListener("resize",()=>{if(mapReady&&$("mapWrap").offsetWidth)map.relayout()});applyFilters();initSocialAuth().then(()=>trackEngagement(null,"visit"));loadKakaoMap();load();setInterval(()=>load(true),300000);
+    window.addEventListener("resize",()=>{if(mapReady&&$("mapWrap").offsetWidth)map.relayout()});applyFilters();initSocialAuth().then(()=>trackEngagement(null,"visit"));
+    Promise.allSettled([loadKakaoMap(),load()]).then(()=>{
+      window.dispatchEvent(new Event("reelsmap:startup-ready"));
+    });
+    setInterval(()=>load(true),300000);
   </script>
 </body>
 </html>
