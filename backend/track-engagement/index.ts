@@ -60,11 +60,14 @@ Deno.serve(async(req:Request)=>{
     if(profileError)return json({ok:false,error:"방문 기록 동의를 확인할 수 없습니다."},500,origin);
     if(profile?.visit_tracking_consent===true)memberUserId=userData.user.id;
   }
+  const source=origin==="capacitor://localhost"?"app":
+    origin&&origin!=="https://reelsmap-ios-preview.milky-bud-7541.chatgpt.site"?"web":"unknown";
   const {data:record,error}=await supabase.rpc("record_engagement_event_with_member",{
     p_restaurant_id:eventType==="visit"?null:restaurantId,
     p_event_type:eventType,
     p_visitor_hash:visitorHash,
-    p_member_user_id:memberUserId
+    p_member_user_id:memberUserId,
+    p_source:source
   });
   if(error)return json({ok:false,error:"집계를 저장하지 못했습니다."},500,origin);
   return json({ok:true,counted:Boolean(record?.accepted),reason:record?.reason||null},200,origin);
