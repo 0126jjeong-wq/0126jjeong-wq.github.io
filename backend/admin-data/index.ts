@@ -144,6 +144,22 @@ Deno.serve(async(req:Request)=>{
           ...member,visit_count:member.visit_tracking_consent?member.visit_count:0
         }))}});
       }
+      const trafficPeriod=params.get("traffic_period");
+      if(trafficPeriod!==null){
+        const selected=params.get("date");
+        const periodDays:Record<string,number>={day:1,week:7,month:30};
+        if(!["day","week","month","all","selected"].includes(trafficPeriod)||
+          (trafficPeriod==="selected" ? !selected||!validDateKey(selected) : selected!==null))
+          return json({ok:false,error:"이용 패턴 조회 기간을 확인해주세요."},400);
+        const today=new Date(Date.now()+9*60*60*1000).toISOString().slice(0,10);
+        const midnight=Date.parse(`${selected||today}T00:00:00+09:00`);
+        const dayMs=24*60*60*1000;
+        const start=trafficPeriod==="all"?null:new Date(midnight-((periodDays[trafficPeriod]||1)-1)*dayMs).toISOString();
+        const end=trafficPeriod==="selected"?new Date(midnight+dayMs).toISOString():null;
+        const {data,error}=await admin.rpc("get_admin_traffic_patterns",{p_start_at:start,p_end_at:end});
+        if(error)throw error;
+        return json({ok:true,patterns:data});
+      }
       const analyticsDate=params.get("analytics_date");
       if(analyticsDate!==null){
         if(!validDateKey(analyticsDate))return json({ok:false,error:"확인할 날짜 형식이 올바르지 않습니다."},400);

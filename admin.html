@@ -78,6 +78,15 @@
               <tbody id="analyticsSources"></tbody>
             </table></div>
           </div>
+          <div class="ranking">
+            <h3>자동 요청 의심 패턴</h3>
+            <p class="analytics-note">같은 익명 ID에서 10초 안에 5건 이상 몰렸거나, 같은 행동을 거의 일정한 간격으로 4회 이상 반복한 경우를 표시합니다. 집계에 저장된 기록을 분석하며, 이 패턴만으로 AI나 봇을 판정하지 않습니다.</p>
+            <p id="trafficPatternStatus" class="analytics-note" role="status">조회 중…</p>
+            <div id="trafficPatternTable" class="members-table-wrap hidden"><table class="members-table">
+              <thead><tr><th scope="col">한국 시간</th><th scope="col">이용 경로</th><th scope="col">패턴</th><th scope="col">감지 내용</th></tr></thead>
+              <tbody id="trafficPatternRows"></tbody>
+            </table></div>
+          </div>
           <div class="ranking"><h3>매장별 반응 순위</h3><div id="analyticsRanking"></div></div>
           <p class="analytics-note">방문자 수는 앱 설치 또는 브라우저의 익명 ID 기준입니다. 같은 사람이 앱과 웹을 모두 쓰면 각각 집계될 수 있습니다. 출처를 확인할 수 없는 기록은 미확인에 포함됩니다. 짧은 시간의 반복 클릭과 하루 상한 초과 요청은 제외합니다.</p>
         </div>
@@ -184,7 +193,37 @@
         return `<tr><th scope="row">${label}</th><td>${number(row.visitors)}</td><td>${number(row.restaurant_clicks)}</td><td>${number(row.reel_clicks)}</td><td>${number(row.route_clicks)}</td></tr>`;
       }).join("");
     }
-    function renderAnalytics(){const data=analytics[analyticsPeriod]||{},number=value=>Number(value||0).toLocaleString("ko-KR");$("analyticsLabel").textContent=data.label||"오늘";$("aVisitors").textContent=number(data.visitors);$("aRestaurantClicks").textContent=number(data.restaurant?.clicks);$("aRestaurantPeople").textContent=number(data.restaurant?.people)+"명";$("aReelClicks").textContent=number(data.reel?.clicks);$("aReelPeople").textContent=number(data.reel?.people)+"명";$("aRouteClicks").textContent=number(data.route?.clicks);$("aRoutePeople").textContent=number(data.route?.people)+"명";renderAnalyticsSources(data.by_source);const rows=data.ranking||[];$("analyticsRanking").innerHTML=rows.length?rows.map((x,i)=>`<div class="rank-row"><div class="rank-no">#${i+1}</div><b>${esc(x.name||"매장")}</b><span>매장 ${number(x.restaurant_clicks)}</span><span>릴스 ${number(x.reel_clicks)}</span><span>길찾기 ${number(x.route_clicks)}</span><span>총 ${number(x.total_clicks)} · ${number(x.people)}명</span></div>`).join(""):'<div class="empty">이 기간에는 아직 클릭 기록이 없습니다.</div>';document.querySelectorAll("[data-period]").forEach(x=>x.classList.toggle("on",x.dataset.period===analyticsPeriod))}
+    let trafficPatternRequest=0;
+    async function loadTrafficPatterns(period,date){
+      const request=++trafficPatternRequest;
+      const status=$("trafficPatternStatus"), table=$("trafficPatternTable");
+      table.classList.add("hidden");
+      status.textContent="이용 패턴 조회 중…";
+      const params=new URLSearchParams({traffic_period:period});
+      if(period==="selected"&&date)params.set("date",date);
+      try{
+        const result=await api("GET",undefined,"?"+params.toString());
+        if(request!==trafficPatternRequest)return;
+        const patterns=result.patterns||{};
+        const rows=patterns.recent||[];
+        status.textContent=rows.length
+          ? `의심 ID ${patterns.flagged}개 · 단시간 집중 ${patterns.burst}개 · 일정 간격 반복 ${patterns.regular}개 (중복 가능, 최근 최대 20건 표시)`
+          : "선택한 기간에 기준을 충족한 패턴이 없습니다.";
+        const time=new Intl.DateTimeFormat("ko-KR",{dateStyle:"short",timeStyle:"medium",timeZone:"Asia/Seoul"});
+        const eventLabels={visit:"방문",restaurant:"매장 클릭",reel:"릴스 클릭",route:"길찾기 클릭"};
+        $("trafficPatternRows").innerHTML=rows.map(row=>{
+          const burst=row.kind==="burst";
+          const elapsed=Number(row.interval_seconds);
+          const gap=elapsed>=60?`${Math.floor(elapsed/60)}분 ${elapsed%60}초`:`${elapsed}초`;
+          const detail=burst?`10초 안에 ${Number(row.event_count)}건`:`${eventLabels[row.event_type]||"같은 행동"} 4회 · 약 ${gap} 간격`;
+          return `<tr><td>${esc(time.format(new Date(row.end_at)))}</td><td>${esc(sourceLabels[row.source]||sourceLabels.unknown)}</td><td>${burst?"단시간 집중":"일정 간격 반복"}</td><td>${esc(detail)}</td></tr>`;
+        }).join("");
+        table.classList.toggle("hidden",!rows.length);
+      }catch{
+        if(request===trafficPatternRequest)status.textContent="이용 패턴을 불러오지 못했습니다. 기간을 다시 선택해 주세요.";
+      }
+    }
+    function renderAnalytics(){const data=analytics[analyticsPeriod]||{},number=value=>Number(value||0).toLocaleString("ko-KR");$("analyticsLabel").textContent=data.label||"오늘";$("aVisitors").textContent=number(data.visitors);$("aRestaurantClicks").textContent=number(data.restaurant?.clicks);$("aRestaurantPeople").textContent=number(data.restaurant?.people)+"명";$("aReelClicks").textContent=number(data.reel?.clicks);$("aReelPeople").textContent=number(data.reel?.people)+"명";$("aRouteClicks").textContent=number(data.route?.clicks);$("aRoutePeople").textContent=number(data.route?.people)+"명";renderAnalyticsSources(data.by_source);loadTrafficPatterns(analyticsPeriod,data.date);const rows=data.ranking||[];$("analyticsRanking").innerHTML=rows.length?rows.map((x,i)=>`<div class="rank-row"><div class="rank-no">#${i+1}</div><b>${esc(x.name||"매장")}</b><span>매장 ${number(x.restaurant_clicks)}</span><span>릴스 ${number(x.reel_clicks)}</span><span>길찾기 ${number(x.route_clicks)}</span><span>총 ${number(x.total_clicks)} · ${number(x.people)}명</span></div>`).join(""):'<div class="empty">이 기간에는 아직 클릭 기록이 없습니다.</div>';document.querySelectorAll("[data-period]").forEach(x=>x.classList.toggle("on",x.dataset.period===analyticsPeriod))}
     async function loadAnalyticsDate(){const selectedDate=$("analyticsDate").value;if(!selectedDate)return alert("확인할 날짜를 선택해주세요.");$("analyticsDateBtn").disabled=true;$("analyticsLabel").textContent="불러오는 중…";try{const result=await api("GET",undefined,"?analytics_date="+encodeURIComponent(selectedDate));analytics.selected=result.analytics?.selected||{};analyticsPeriod="selected";renderAnalytics()}catch(error){alert(error.message);renderAnalytics()}finally{$("analyticsDateBtn").disabled=false}}
     function renderInbox(){const q=$("inboxSearch").value.toLowerCase(),rows=inbox.filter(x=>(!inboxReviewOnly||isReviewNeeded(x))&&[x.submitted_name,x.restaurant_name,x.creator_handle,x.address,x.source_url].join(" ").toLowerCase().includes(q));$("inboxFilterBadge").classList.toggle("hidden",!inboxReviewOnly);$("reviewFilterBtn").classList.toggle("hidden",!inboxReviewOnly);$("inboxList").innerHTML=rows.length?rows.map(x=>`<article class="row"><div><div class="name">${esc(x.restaurant_name||x.submitted_name||"상호 입력 필요")}</div><div class="sub">${x.creator_handle?`@${esc(x.creator_handle)} · `:""}${new Date(x.created_at).toLocaleString("ko-KR")}</div></div><div><div>${esc(x.address||"공식 장소 확인 전")}</div><div class="sub">${esc(x.source_fetch_note||x.analysis_error||"")}</div></div><div><span class="pill warn">${esc(statusLabel(x.analysis_status||x.status))}</span><div class="sub">${esc(x.place_provider||"URL만 저장")}</div></div><div class="actions"><a class="btn ghost" target="_blank" rel="noopener" href="${esc(x.source_url)}">게시물 보기</a><button class="btn primary" data-edit-inbox="${x.id}">장소 확인·공개</button><button class="btn ghost" data-ignore="${x.id}">제외</button><button class="btn danger" data-delete-inbox="${x.id}">완전 삭제</button></div></article>`).join(""):`<div class="empty">${inboxReviewOnly?"검토가 필요한 링크가 없습니다.":"수집된 링크가 없습니다."}</div>`}
     function renderDrafts(){$("draftList").innerHTML=drafts.length?drafts.map(d=>{const x=d.payload||{},image=inheritedImage(x).url;return `<article class="row"><div><div class="name">${image?`<img class="admin-thumb" src="${esc(image)}" alt="">`:""}${esc(x.name||"이름 작성 중")}</div><div class="sub">${esc(x.category||"식사")} · ${esc(x.region||"지역 미입력")}</div></div><div><div>${esc(x.address||"주소 작성 중")}</div><div class="sub">${new Date(d.updated_at).toLocaleString("ko-KR")} 저장</div></div><div><span class="pill warn">임시 저장</span><div class="sub">일반 지도 미노출</div></div><div class="actions"><button class="btn primary" data-resume-draft="${d.id}">이어서 작성</button><button class="btn danger" data-delete-draft="${d.id}">임시 저장 삭제</button></div></article>`}).join(""):'<div class="empty">임시 저장한 맛집이 없습니다.</div>'}
