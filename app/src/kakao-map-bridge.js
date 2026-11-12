@@ -1,5 +1,5 @@
 (() => {
-  const origin = "https://myreelsmap.com";
+  const origins = new Set(["https://myreelsmap.com", "https://www.myreelsmap.com"]);
   const fallback = window.kakao.maps;
   const frames = new WeakMap();
 
@@ -62,7 +62,8 @@
     frame.sandbox = "allow-scripts allow-same-origin";
     frame.style.cssText = "display:block;width:100%;height:100%;border:0";
     const connection = {
-      send(type, data) { frame.contentWindow.postMessage({ channel, type, ...data }, origin); },
+      targetOrigin: null,
+      send(type, data) { frame.contentWindow.postMessage({ channel, type, ...data }, this.targetOrigin || "*"); },
       onEvent: null
     };
     let ready = false;
@@ -75,7 +76,8 @@
       resolve(fallback);
     }
     function receive(event) {
-      if (event.origin !== origin || event.source !== frame.contentWindow || event.data?.channel !== channel) return;
+      if (!origins.has(event.origin) || event.source !== frame.contentWindow || event.data?.channel !== channel) return;
+      connection.targetOrigin = event.origin;
       if (event.data.type === "unavailable") return fail();
       if (event.data.type === "ready" && !ready) {
         ready = true;
@@ -96,7 +98,8 @@
       } else if (ready) connection.onEvent?.(event.data);
     }
     window.addEventListener("message", receive);
-    frame.src = origin + "/app-map.html#" + channel;
+    frame.referrerPolicy = "origin";
+    frame.src = "https://myreelsmap.com/app-map.html#" + channel;
     element.append(frame);
   });
 })();
