@@ -60,6 +60,7 @@
     load: callback => callback(),
     Map: MapAdapter, LatLng, LatLngBounds, CustomOverlay,
     MapTypeControl: class {}, ZoomControl: class {}, ControlPosition: { TOPRIGHT: 1, RIGHT: 2 },
-    event: { addListener(map, name, callback) { map.instance.on(name === 'zoom_changed' ? 'zoomend' : name, callback); }, preventMap() {} }
+    event: { addListener(map, name, callback) { map.instance.on(name === 'zoom_changed' ? 'zoomend' : name,
+      event => callback(event.latlng ? { latLng: event.latlng } : event)); }, preventMap() {} }
   } };
 })();

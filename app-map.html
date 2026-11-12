@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>릴스맵 카카오 지도</title>
+<style>
+  *{box-sizing:border-box}
+  html,body,#map{width:100%;height:100%;margin:0}
+  .category-icon{fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}
+    .map-pin{position:relative;display:grid;place-items:center;width:42px;height:42px;border:3px solid #fff;border-radius:18px 18px 18px 5px;background:#fff;box-shadow:0 7px 18px #0004;transform:rotate(-45deg);padding:0;cursor:pointer;color:#fff}.map-pin span{display:grid;place-items:center;transform:rotate(45deg);line-height:1}.map-pin .category-icon{width:21px;height:21px;stroke-width:2.1}.map-pin.cat-meal{background:#fff;color:#202124;border-color:#202124}.map-pin.cat-japanese{background:#ff7900}.map-pin.cat-western{background:#7b3fc6}.map-pin.cat-cafe{background:#f5c400;color:#2b2300}.map-pin.cat-bar{background:#18191b}.map-pin.photo-pin{width:50px;height:50px;padding:2px;border-color:#fff;border-radius:50%;background:#fff;transform:none;box-shadow:0 8px 21px #0005}.map-pin.photo-pin::after{content:"";position:absolute;left:50%;bottom:-5px;width:12px;height:12px;background:#fff;transform:translateX(-50%) rotate(45deg);z-index:-1}.map-pin.photo-pin span{width:100%;height:100%;border-radius:50%;overflow:hidden;transform:none}.map-pin.photo-pin img{width:100%;height:100%;object-fit:cover;display:block}.map-pin.active{width:48px;height:48px;z-index:2;box-shadow:0 0 0 4px #1687ff55,0 9px 22px #0005}.map-pin.photo-pin.active{width:56px;height:56px}.map-pin:focus-visible{outline:3px solid #1687ff;outline-offset:3px}.my-location-dot{width:19px;height:19px;border:4px solid #fff;border-radius:50%;background:#1687ff;box-shadow:0 0 0 7px #1687ff28,0 3px 10px #0003}
+    .map-cluster{width:48px;height:48px;border:3px solid #fff;border-radius:50%;background:#17181b;color:#fff;box-shadow:0 6px 20px #0004;font-size:14px;font-weight:950;cursor:pointer}
+</style>
+<div id="map"></div>
+<script>
+(() => {
+  const channel = location.hash.slice(1);
+  if (parent === window || !/^[a-f0-9-]{36}$/.test(channel)) return;
+  const send = (type, data = {}) => parent.postMessage({ channel, type, ...data }, "*");
+  const overlays = new Map();
+  const point = ({lat,lng}) => new kakao.maps.LatLng(lat,lng);
+  let map;
+  // Rebuild the marker with only the elements and attributes the app uses.
+  function safeMarker(html) {
+    const root = new DOMParser().parseFromString(html, "text/html").body.firstElementChild;
+    function copy(node) {
+      if(node.nodeType === 3) return document.createTextNode(node.textContent);
+      if(!["button","div","span","img","svg","path","circle","line","rect","polyline","polygon","ellipse"].includes(node.localName)) return null;
+      const element = document.createElementNS(node.namespaceURI,node.localName);
+      for(const attribute of node.attributes) {
+        if(["class","aria-label","aria-hidden","title","alt","type","viewBox","d","cx","cy","r","x","y","x1","x2","y1","y2","width","height","rx","ry","points"].includes(attribute.name)) element.setAttribute(attribute.name,attribute.value);
+        if(attribute.name==="src" && node.localName==="img" && /^https:\/\//i.test(attribute.value)) element.setAttribute("src",attribute.value);
+      }
+      for(const child of node.childNodes) {
+        const clean = copy(child);
+        if(clean) element.append(clean);
+      }
+      return element;
+    }
+    return root && copy(root);
+  }
+
+  addEventListener("message", ({source,origin,data}) => {
+    if(source!==parent || !["capacitor://localhost","null"].includes(origin) || data?.channel!==channel || !window.kakao?.maps?.Map) return;
+    if(data.type==="init" && !map) {
+      map = new kakao.maps.Map(document.getElementById("map"), {center:point(data.center),level:data.level});
+      map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
+      kakao.maps.event.addListener(map,"zoom_changed",()=>send("zoom_changed",{level:map.getLevel()}));
+      kakao.maps.event.addListener(map,"click",event=>send("click",{point:{lat:event.latLng.getLat(),lng:event.latLng.getLng()}}));
+    }
+    if(!map) return;
+    switch(data.type) {
+      case "min": map.setMinLevel(data.level); break;
+      case "max": map.setMaxLevel(data.level); break;
+      case "level": map.setLevel(data.level); break;
+      case "center": map.setCenter(point(data.point)); break;
+      case "move":
+        if(data.animate && map.getLevel()===data.level) map.panTo(point(data.point));
+        else { map.setLevel(data.level,{animate:data.animate,anchor:point(data.point)}); map.setCenter(point(data.point)); }
+        break;
+      case "bounds": {
+        const bounds = new kakao.maps.LatLngBounds();
+        data.points.forEach(item=>bounds.extend(point(item)));
+        map.setBounds(bounds,85,35,65,35);
+        break;
+      }
+      case "resize": map.relayout(); break;
+      case "remove": overlays.get(data.id)?.setMap(null); overlays.delete(data.id); break;
+      case "overlay": {
+        const content = safeMarker(data.html);
+        if(!content) break;
+        content.addEventListener("click",event=>{event.stopPropagation();kakao.maps.event.preventMap();send("overlay-click",{id:data.id});});
+        const previous = overlays.get(data.id);
+        if(previous) previous.setContent(content);
+        else overlays.set(data.id,new kakao.maps.CustomOverlay({map,content,position:point(data.position),xAnchor:data.xAnchor,yAnchor:data.yAnchor,zIndex:data.zIndex}));
+        break;
+      }
+    }
+  });
+  const sdk = document.createElement("script");
+  sdk.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=45ac1c77b2d1d103f8d595ad8440f0c0&autoload=false";
+  sdk.onload = () => window.kakao?.maps?.load ? kakao.maps.load(()=>send("ready")) : send("unavailable");
+  sdk.onerror = () => send("unavailable");
+  document.head.append(sdk);
+})();
+</script>
+</html>
