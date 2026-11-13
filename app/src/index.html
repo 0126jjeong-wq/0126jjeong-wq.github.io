@@ -11,7 +11,6 @@
   <title>릴스맵 | 릴스로 찾는 내 주변 맛집</title>
   <link rel="preconnect" href="https://dapi.kakao.com">
   <link rel="preconnect" href="https://t1.daumcdn.net">
-  <link rel="stylesheet" href="./vendor/leaflet.css">
   <style>
     :root{--brand:#ff4d2e;--brand-dark:#d9361e;--ink:#17181b;--muted:#73757b;--line:#e8e6e3;--canvas:#f7f6f3;--soft:#fff0eb;--shadow:0 14px 40px #1d1d1d12}
     *{box-sizing:border-box}html,body{margin:0;height:100%;color:var(--ink);background:var(--canvas);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Segoe UI",sans-serif}button,input{font:inherit}button{cursor:pointer}a{color:inherit}.hidden{display:none!important}
@@ -83,7 +82,6 @@
     .map-card b{margin:0}.map-card span{margin-right:auto}
     .map-toolbar .map-category-filter{padding:5px;margin:0}
     .map-wrap:has(.place-sheet:not(.hidden)) .map-tools,
-    .map-wrap:has(.place-sheet:not(.hidden)) .leaflet-bottom.leaflet-left{visibility:hidden}
     .map-tools{z-index:800;right:12px;bottom:16px}
     .place-sheet{z-index:810;left:12px;right:12px;bottom:12px}
     .map-error{z-index:820}
@@ -240,7 +238,7 @@
       <div id="map" aria-label="맛집 지도"></div>
       <div class="map-tools" aria-label="지도 도구"><button id="mapLocationBtn" class="map-tool primary" type="button">⌖<br>현위치</button><button id="mapResetBtn" class="map-tool" type="button">⛶<br>전체보기</button></div>
       <article id="placeSheet" class="place-sheet hidden" aria-live="polite"></article>
-      <div id="mapError" class="map-error hidden"><div class="map-error-card"><b>지도를 불러오지 못했어요</b><span>웹 지도를 열어 맛집 위치를 확인할 수 있어요.</span><p><a href="https://myreelsmap.com/">웹 지도 보기 ↗</a></p></div></div>
+      <div id="mapError" class="map-error hidden"><div class="map-error-card"><b>카카오 지도를 불러오지 못했어요</b><span>인터넷 연결을 확인한 뒤 앱을 다시 열어주세요.</span></div></div>
     </section>
     <section class="recommendations-view" aria-label="취향 추천">
       <h1 id="recommendationTitle">내 취향 맛집</h1>
@@ -263,8 +261,6 @@
     <dialog id="connectReelDialog"><div class="location-help"><h2>릴스를 내 지도에 저장</h2><p id="connectReelSource"></p><p class="place-match-note">릴스 링크는 이미 보관됐어요. 아래에 맛집 후보가 보이면 주소를 확인하고 맞는 곳을 선택해 주세요. 후보가 없으면 맛집 이름이나 동네를 검색하면 위치 정보를 채워드려요. 선택하기 전에는 지도에 등록되지 않아요.</p><label for="placeMatchSearch">맛집 이름·주소 검색</label><input id="placeMatchSearch" type="search" placeholder="예: 을지로 맛집 이름"><div id="placeMatchResults"></div><details><summary>목록에 없는 맛집 직접 추가</summary><form id="privatePlaceForm" class="profile-form"><label>맛집 이름<input id="privatePlaceName" maxlength="120" required></label><label>주소<input id="privatePlaceAddress" maxlength="250" required></label><label>카테고리<select id="privatePlaceCategory"><option>식사</option><option>일식</option><option>양식</option><option>카페·디저트</option><option>술집</option></select></label><p>지도를 움직여 맛집 위치를 찾은 뒤 해당 지점을 눌러주세요.</p><div id="privatePlaceMap" style="height:260px;border-radius:12px" aria-label="내 맛집 위치 선택 지도"></div><p id="privatePlaceLocation" role="status">아직 위치를 선택하지 않았어요</p><button type="submit" class="profile-save">내 지도에 저장</button></form></details><p id="connectReelMessage" role="status"></p><button id="closeConnectReel" type="button" class="auth-button">닫기</button></div></dialog>
   <dialog id="loginDialog"><div class="location-help"><h2>회원가입 · 로그인</h2><p>맛집과 릴스를 내 계정에 저장하세요. 처음 로그인하면 회원정보 입력 후 가입이 완료돼요.</p><div class="auth-entry"><button id="kakaoLogin" class="auth-button kakao" type="button">카카오로 계속하기</button><button id="googleLogin" class="auth-button google" type="button">Google로 계속하기</button><p id="authMessage" class="auth-error" role="status"></p><button id="closeLogin" class="auth-button" type="button">닫기</button></div></div></dialog>
   <dialog id="profileDialog"><div class="location-help"><h2 id="profileTitle">회원 정보 입력</h2><p id="profileIntro">가입을 마치려면 아래 정보를 입력해 주세요.</p><form id="profileForm" class="profile-form"><label for="profileFullName">이름<input id="profileFullName" autocomplete="name" maxlength="80" required></label><label for="profilePhone">전화번호<input id="profilePhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" placeholder="010-1234-5678" required></label><label for="profileBirthDate">생일<input id="profileBirthDate" type="date" autocomplete="bday" min="1900-01-01" required></label><label for="profileNickname">닉네임<input id="profileNickname" autocomplete="nickname" minlength="2" maxlength="16" pattern="[가-힣A-Za-z0-9_-]{2,16}" placeholder="2~16자, 한글·영문·숫자" required></label><label class="profile-consent"><input id="profileConsent" type="checkbox" required><span>이름·전화번호·생일·닉네임을 회원정보 관리 및 서비스 개선 목적으로 수집·이용하는 데 동의합니다. <a href="./policy.html#privacy" target="_blank" rel="noopener">개인정보처리방침</a></span></label><label class="profile-consent"><input id="visitTrackingConsent" type="checkbox"><span>선택 동의: 앱 방문 일시를 내 계정과 연결해 기록합니다. 관리자는 회원관리에서 기간별 방문 횟수와 일시를 확인할 수 있습니다. 동의하지 않아도 가입할 수 있습니다.</span></label><label id="kakaoMarketingLabel" class="profile-consent hidden"><input id="kakaoMarketingConsent" type="checkbox"><span>선택 동의: 릴스맵에서 카카오톡으로 광고·혜택 소식을 보내는 데 동의합니다. 가입에 필수는 아니며 회원정보 수정에서 언제든 철회할 수 있습니다. 실제 발송은 카카오톡 채널 등 별도 연결 후에만 가능합니다. <a href="./policy.html#privacy" target="_blank" rel="noopener">자세히 보기</a></span></label><p id="profileMessage" class="auth-error" role="status"></p><button id="profileSave" class="profile-save" type="submit">저장하고 계속하기</button><button id="profileLogout" class="auth-button" type="button">로그아웃</button></form></div></dialog>
-  <script src="./vendor/leaflet.js"></script>
-  <script src="./map-fallback.js"></script>
   <script src="./kakao-map-bridge.js"></script>
   <script src="./native.js"></script>
   <script>
@@ -370,6 +366,7 @@
       const send=async()=>{const headers={"content-type":"application/json"};if(currentProfile?.visit_tracking_consent===true){const{data}=await authClient.auth.getSession();if(data.session?.access_token)headers.authorization="Bearer "+data.session.access_token}await fetch(TRACK_API,{method:"POST",headers,body:JSON.stringify({restaurant_id:restaurantId?String(restaurantId):null,event_type:eventType,visitor_id:visitorId}),keepalive:true})};send().catch(()=>{});
     }
     function showMapError(){mapReady=false;$("mapError").classList.remove("hidden")}
+    window.addEventListener("reelsmap:kakao-tiles-error",showMapError);
     async function loadKakaoMap(){
       try {
         if(location.protocol==="capacitor:" && window.prepareKakaoMap) {
@@ -857,16 +854,6 @@
       $("mapScopeBtn").textContent="내 지도만 보기";
       setView("map");
       requestAnimationFrame(()=>mapReady&&$("mapWrap").offsetWidth&&map.relayout());
-    });
-    let mapFallbackActivated=false;
-    window.addEventListener("reelsmap:map-tiles-unavailable",()=>{
-      if(mapFallbackActivated||location.protocol!=="capacitor:"||!window.switchKakaoMapToFallback)return;
-      mapFallbackActivated=true;
-      markerOverlays.forEach(overlay=>overlay.setMap(null));markerOverlays=[];
-      locationOverlay?.setMap(null);locationOverlay=null;mapReady=false;map=null;
-      window.switchKakaoMapToFallback($("map"));
-      initKakaoMap();
-      toast("카카오 지도를 불러오지 못해 대체 지도로 연결했어요.");
     });
     document.addEventListener("click",event=>{const reel=event.target.closest("[data-track-reel]"),route=event.target.closest("[data-track-route]");if(reel)trackEngagement(reel.dataset.trackReel,"reel");else if(route)trackEngagement(route.dataset.trackRoute,"route")});
     document.addEventListener("click",event=>{const link=event.target.closest('a[href^="./policy.html"],a[href^="https://www.instagram.com/"],a[href^="https://instagram.com/"],a[href^="https://map.kakao.com/"],a[href^="https://myreelsmap.com/"]');if(!link||!window.ReelsNative?.enabled)return;event.preventDefault();const url=link.getAttribute("href").startsWith("./policy.html")?new URL(link.getAttribute("href"),"https://myreelsmap.com/").href:link.href;window.ReelsNative.open(url).catch(()=>toast("링크를 열지 못했어요"))});
