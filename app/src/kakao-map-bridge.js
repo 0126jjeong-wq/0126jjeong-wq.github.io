@@ -1,14 +1,6 @@
 (() => {
   const origins = new Set(["https://myreelsmap.com", "https://www.myreelsmap.com"]);
-  const fallback = window.kakao.maps;
   const frames = new WeakMap();
-  window.switchKakaoMapToFallback = element => {
-    const connection = frames.get(element);
-    connection?.frame.remove();
-    element.replaceChildren();
-    window.kakao.maps = fallback;
-    return fallback;
-  };
 
   class HostedMap {
     constructor(element, options) {
@@ -62,14 +54,13 @@
     }
   }
 
-  window.prepareKakaoMap = element => new Promise(resolve => {
+  window.prepareKakaoMap = element => new Promise((resolve, reject) => {
     const frame = document.createElement("iframe");
     const channel = crypto.randomUUID();
     frame.title = "카카오 맛집 지도";
     frame.sandbox = "allow-scripts allow-same-origin";
     frame.style.cssText = "display:block;width:100%;height:100%;border:0";
     const connection = {
-      frame,
       targetOrigin: null,
       send(type, data) { frame.contentWindow.postMessage({ channel, type, ...data }, this.targetOrigin || "*"); },
       onEvent: null
@@ -81,14 +72,14 @@
       clearTimeout(timeout);
       window.removeEventListener("message", receive);
       frame.remove();
-      resolve(fallback);
+      reject(new Error("카카오 지도를 불러오지 못했습니다."));
     }
     function receive(event) {
       if (!origins.has(event.origin) || event.source !== frame.contentWindow || event.data?.channel !== channel) return;
       connection.targetOrigin = event.origin;
       if (event.data.type === "unavailable") return fail();
       if (event.data.type === "tiles-unavailable") {
-        window.dispatchEvent(new Event("reelsmap:map-tiles-unavailable"));
+        window.dispatchEvent(new CustomEvent("reelsmap:kakao-tiles-error"));
         return;
       }
       if (event.data.type === "ready" && !ready) {
@@ -96,7 +87,7 @@
         clearTimeout(timeout);
         frames.set(element, connection);
         resolve({
-          ...fallback,
+          ...window.kakao.maps,
           Map: HostedMap,
           CustomOverlay: HostedOverlay,
           event: {
