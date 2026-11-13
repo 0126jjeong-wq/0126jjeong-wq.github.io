@@ -48,7 +48,7 @@
     .account-area{margin-left:auto;display:flex;align-items:center;gap:6px}.account-button,.account-nickname{border:1px solid var(--line);background:#fff;border-radius:12px;min-height:38px;padding:0 10px;font-size:11px;font-weight:900;white-space:nowrap}.account-button{color:var(--brand-dark)}.account-nickname{max-width:100px;overflow:hidden;text-overflow:ellipsis}.auth-entry,.profile-form{display:grid;gap:10px;margin-top:15px}.auth-button,.profile-save{min-height:44px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:900}.auth-button.google{background:#fff}.auth-button.kakao{background:#fee500;border-color:#fee500;color:#191919}.profile-save{background:var(--brand);border-color:var(--brand);color:#fff}.auth-error{min-height:16px;margin:0!important;color:#b22a17!important}.profile-form>label:not(.profile-consent){display:grid;gap:5px;font-size:12px;font-weight:850}.profile-form input:not([type=checkbox]){width:100%;height:42px;border:1px solid #ddd;border-radius:10px;padding:0 11px}.profile-consent{display:flex;align-items:flex-start;gap:8px;font-size:11px;line-height:1.5;color:#555}.profile-consent input{margin-top:3px}.profile-consent span{flex:1}dialog .location-help{max-height:80vh;overflow:auto}
     .location-help .auth-button{background:#fff;color:var(--ink)}.location-help .auth-button.kakao{background:#fee500;border-color:#fee500}.location-help .auth-button:disabled{opacity:.6;cursor:not-allowed}.location-help .profile-save{background:var(--brand);color:#fff}
     @media(max-width:760px){.top-count{display:none}.account-area{margin-left:auto}.brand-name{font-size:16px}}
-    #connectReelDialog{width:min(94vw,520px);border:1px solid var(--line);border-radius:20px}#placeMatchSearch{width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;margin:8px 0}#placeMatchResults{display:grid;gap:8px;margin:10px 0}#connectReelSource{overflow-wrap:anywhere}#mapScopeBtn{font-size:11px;min-height:36px}.map-card{flex-wrap:wrap}
+    #connectReelDialog{width:min(94vw,520px);border:1px solid var(--line);border-radius:20px}#placeMatchSearch{width:100%;padding:12px;border:1px solid #ddd;border-radius:12px;margin:8px 0}#placeMatchResults{display:grid;gap:8px;margin:10px 0}#connectReelSource{overflow-wrap:anywhere}#mapScopeBtn{font-size:11px;min-height:36px}.map-card{flex-wrap:wrap}.place-match-note{padding:10px 12px;border-radius:12px;background:#fff8f5;color:#72574f;font-size:12px;line-height:1.5}.place-match-heading{margin:12px 0 4px;font-size:12px;font-weight:900;color:#555}
     @media(min-width:761px){body{padding-bottom:70px}.bottom-nav{position:fixed;display:grid;grid-template-columns:repeat(4,1fr);left:0;right:0;bottom:0;height:64px;background:#fff;border-top:1px solid var(--line);z-index:2000}.nav-btn{border:0;background:none;color:#87898e;font-size:12px;display:grid;place-items:center}.nav-btn i{font-style:normal;font-size:20px}.nav-btn.on{color:var(--brand)}body[data-view="register"] .registration-view{display:block}body[data-view="register"] .main-intro,body[data-view="register"] .filter-groups,body[data-view="register"] .section-head,body[data-view="register"] .sort-note,body[data-view="register"] .cards,body[data-view="register"] .pagination{display:none}}
 
     .recommendations-view{display:none;padding:20px;max-width:720px;margin:auto;width:100%}.recommendations-view h1{font-size:24px}.recommendations-view p{font-size:13px;line-height:1.6;color:var(--muted)}.recommendation-orders{display:flex;gap:8px;margin:18px 0}.recommendation-card{padding:18px;background:white;border:1px solid var(--line);border-radius:18px;margin:12px 0}.recommendation-card h2{font-size:18px;margin:8px 0}.prototype-label{display:inline-block;background:#fff0e9;color:#b33b20;padding:6px 10px;border-radius:8px;font-size:12px;font-weight:800}.library-tools{display:none;padding:12px 0;gap:8px}body[data-view="saved"] .library-tools{display:flex}body[data-view="recommendations"] .feed,body[data-view="recommendations"] .map-wrap{display:none!important}body[data-view="recommendations"] .recommendations-view{display:block}body[data-view="recommendations"] .layout{display:block}body[data-view="recommendations"] .search{display:none}
@@ -188,7 +188,7 @@
   </script>
   <header class="topbar">
     <a class="brand" href="./" aria-label="릴스맵 홈"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 64 64" width="27" height="27" role="img" aria-label="릴스 맛집 지도"><use href="#reelsmap-logo"/></svg></span><span class="brand-name">릴스맵</span></a>
-    <div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="가게명, 동네, 음식으로 검색" aria-label="맛집 검색"></div>
+    <div class="search"><span>⌕</span><input id="searchInput" type="search" placeholder="맛집 이름, 동네, 음식으로 검색" aria-label="맛집 검색"></div>
     <div class="top-count">서울 맛집 <b id="topCount">불러오는 중</b></div>
     <div class="account-area"><button id="accountNickname" class="account-nickname hidden" type="button" aria-label="회원 정보 수정"></button><button id="openLogin" class="account-button" type="button">로그인</button></div>
   </header>
@@ -260,7 +260,7 @@
   </nav>
   <div id="toast" class="toast"></div>
   <dialog id="locationHelp"><div class="location-help"><h2>위치 권한을 켜주세요</h2><p id="locationHelpReason">현재 위치를 확인하지 못했습니다.</p><ol><li>아이폰·아이패드: 설정 → 릴스맛집지도 → 위치 → 앱을 사용하는 동안 허용</li><li>설정을 바꾼 뒤 앱으로 돌아와 현위치 버튼을 다시 눌러주세요.</li></ol><button type="button" data-location-close>확인</button></div></dialog>
-  <dialog id="connectReelDialog"><div class="location-help"><h2>릴스를 내 지도에 저장</h2><p id="connectReelSource"></p><label for="placeMatchSearch">가게명·주소 검색</label><input id="placeMatchSearch" type="search" placeholder="예: 을지로 가게명"><div id="placeMatchResults"></div><details><summary>목록에 없는 가게 직접 추가</summary><form id="privatePlaceForm" class="profile-form"><label>가게명<input id="privatePlaceName" maxlength="120" required></label><label>주소<input id="privatePlaceAddress" maxlength="250" required></label><label>카테고리<select id="privatePlaceCategory"><option>식사</option><option>일식</option><option>양식</option><option>카페·디저트</option><option>술집</option></select></label><p>지도를 움직여 가게 위치를 찾은 뒤 해당 지점을 눌러주세요.</p><div id="privatePlaceMap" style="height:260px;border-radius:12px" aria-label="내 가게 위치 선택 지도"></div><p id="privatePlaceLocation" role="status">아직 위치를 선택하지 않았어요</p><button type="submit" class="profile-save">내 지도에 저장</button></form></details><p id="connectReelMessage" role="status"></p><button id="closeConnectReel" type="button" class="auth-button">닫기</button></div></dialog>
+    <dialog id="connectReelDialog"><div class="location-help"><h2>릴스를 내 지도에 저장</h2><p id="connectReelSource"></p><p class="place-match-note">릴스 링크는 이미 보관됐어요. 아래에 맛집 후보가 보이면 주소를 확인하고 맞는 곳을 선택해 주세요. 후보가 없으면 맛집 이름이나 동네를 검색하면 위치 정보를 채워드려요. 선택하기 전에는 지도에 등록되지 않아요.</p><label for="placeMatchSearch">맛집 이름·주소 검색</label><input id="placeMatchSearch" type="search" placeholder="예: 을지로 맛집 이름"><div id="placeMatchResults"></div><details><summary>목록에 없는 맛집 직접 추가</summary><form id="privatePlaceForm" class="profile-form"><label>맛집 이름<input id="privatePlaceName" maxlength="120" required></label><label>주소<input id="privatePlaceAddress" maxlength="250" required></label><label>카테고리<select id="privatePlaceCategory"><option>식사</option><option>일식</option><option>양식</option><option>카페·디저트</option><option>술집</option></select></label><p>지도를 움직여 맛집 위치를 찾은 뒤 해당 지점을 눌러주세요.</p><div id="privatePlaceMap" style="height:260px;border-radius:12px" aria-label="내 맛집 위치 선택 지도"></div><p id="privatePlaceLocation" role="status">아직 위치를 선택하지 않았어요</p><button type="submit" class="profile-save">내 지도에 저장</button></form></details><p id="connectReelMessage" role="status"></p><button id="closeConnectReel" type="button" class="auth-button">닫기</button></div></dialog>
   <dialog id="loginDialog"><div class="location-help"><h2>회원가입 · 로그인</h2><p>맛집과 릴스를 내 계정에 저장하세요. 처음 로그인하면 회원정보 입력 후 가입이 완료돼요.</p><div class="auth-entry"><button id="kakaoLogin" class="auth-button kakao" type="button">카카오로 계속하기</button><button id="googleLogin" class="auth-button google" type="button">Google로 계속하기</button><p id="authMessage" class="auth-error" role="status"></p><button id="closeLogin" class="auth-button" type="button">닫기</button></div></div></dialog>
   <dialog id="profileDialog"><div class="location-help"><h2 id="profileTitle">회원 정보 입력</h2><p id="profileIntro">가입을 마치려면 아래 정보를 입력해 주세요.</p><form id="profileForm" class="profile-form"><label for="profileFullName">이름<input id="profileFullName" autocomplete="name" maxlength="80" required></label><label for="profilePhone">전화번호<input id="profilePhone" type="tel" inputmode="tel" autocomplete="tel" maxlength="24" placeholder="010-1234-5678" required></label><label for="profileBirthDate">생일<input id="profileBirthDate" type="date" autocomplete="bday" min="1900-01-01" required></label><label for="profileNickname">닉네임<input id="profileNickname" autocomplete="nickname" minlength="2" maxlength="16" pattern="[가-힣A-Za-z0-9_-]{2,16}" placeholder="2~16자, 한글·영문·숫자" required></label><label class="profile-consent"><input id="profileConsent" type="checkbox" required><span>이름·전화번호·생일·닉네임을 회원정보 관리 및 서비스 개선 목적으로 수집·이용하는 데 동의합니다. <a href="./policy.html#privacy" target="_blank" rel="noopener">개인정보처리방침</a></span></label><label class="profile-consent"><input id="visitTrackingConsent" type="checkbox"><span>선택 동의: 앱 방문 일시를 내 계정과 연결해 기록합니다. 관리자는 회원관리에서 기간별 방문 횟수와 일시를 확인할 수 있습니다. 동의하지 않아도 가입할 수 있습니다.</span></label><label id="kakaoMarketingLabel" class="profile-consent hidden"><input id="kakaoMarketingConsent" type="checkbox"><span>선택 동의: 릴스맵에서 카카오톡으로 광고·혜택 소식을 보내는 데 동의합니다. 가입에 필수는 아니며 회원정보 수정에서 언제든 철회할 수 있습니다. 실제 발송은 카카오톡 채널 등 별도 연결 후에만 가능합니다. <a href="./policy.html#privacy" target="_blank" rel="noopener">자세히 보기</a></span></label><p id="profileMessage" class="auth-error" role="status"></p><button id="profileSave" class="profile-save" type="submit">저장하고 계속하기</button><button id="profileLogout" class="auth-button" type="button">로그아웃</button></form></div></dialog>
   <script src="./vendor/leaflet.js"></script>
@@ -572,8 +572,8 @@
         if(!available.has(String(place.id)))available.set(String(place.id),place);
       }
       const matches=q?[...available.values()].filter(x => `${x.name} ${x.address}`.toLowerCase().includes(q)).slice(0,10):window.ReelsLinks.matchPlaces(connectingUrl,restaurants);
-      if(!q&&!matches.length){target.textContent=linked?`현재 연결: ${linked.place.name}. 바꿀 가게명을 검색해 주세요.`:dataReady?"가게명을 입력하면 기존 맛집 및 카카오 장소 검색에서 찾을 수 있어요.":"맛집 목록을 불러오는 중이에요. 잠시 후 가게명을 검색해 주세요.";return;}
-      if(!q&&matches.length){const note=document.createElement("p");note.textContent="이 릴스에 등록된 가게예요. 눌러서 내 지도에 저장하세요.";target.append(note);}
+      if(!q&&!matches.length){target.textContent=linked?`현재 연결: ${linked.place.name}. 다른 맛집을 연결하려면 이름이나 주소를 검색해 주세요.`:dataReady?"일치하는 맛집 후보가 없어요. 이름이나 동네를 검색하면 카카오맵 결과를 제안해 드려요.":"맛집 목록을 불러오는 중이에요. 잠시 후 검색해 주세요.";return;}
+      if(!q&&matches.length){const note=document.createElement("p");note.className="place-match-note";note.textContent="이미 등록된 릴스와 일치하는 맛집 후보예요. 주소를 확인한 뒤 맞는 곳을 선택해 주세요.";target.append(note);}
       for (const place of matches) {
         const button=document.createElement("button");
         button.type="button";
@@ -591,8 +591,8 @@
             if(connectingUrl!==searchedUrl||$("placeMatchSearch").value.trim().toLowerCase()!==q||!$("connectReelDialog").open)return;
             if(status===window.kakao.maps.services.Status.OK&&Array.isArray(result)&&result.length){
               const header=document.createElement("p");
-              header.style.cssText="margin:10px 0 4px;font-size:11px;font-weight:900;color:#555";
-              header.textContent="📍 카카오맵 실시간 검색 (눌러서 1초 만에 핀 꽂기)";
+              header.className="place-match-heading";
+              header.textContent="카카오맵 검색 결과 · 맞는 맛집을 선택하면 저장돼요";
               target.append(header);
               for(const item of result.slice(0,6)){
                 const btn=document.createElement("button");
@@ -611,12 +611,12 @@
                 target.append(btn);
               }
             } else if(!matches.length){
-              target.textContent="검색 결과가 없어요. 아래에서 직접 추가할 수 있어요.";
+              target.textContent="검색 결과가 없어요. 아래에서 맛집을 직접 추가할 수 있어요.";
             }
           });
         }
       } else if(!matches.length){
-        target.textContent="등록된 가게가 없어요. 가게명을 2글자 이상 입력하면 카카오맵에서 검색됩니다.";
+        target.textContent="등록된 맛집 후보가 없어요. 이름을 두 글자 이상 입력하면 카카오맵에서 검색됩니다.";
       }
     }
     function openConnection(url) {
@@ -659,7 +659,7 @@
       link.textContent=`릴스 ${index+1} 보기 ↗`;
       connect.type="button";
       connect.className="chip";
-      connect.textContent=reel.place?`${reel.place.name} · 연결 변경`:suggested.length===1?`${suggested[0].name} · 후보 확인`:"가게 연결";
+        connect.textContent=reel.place?`${reel.place.name} · 연결 변경`:suggested.length===1?`후보 확인 · ${suggested[0].name}`:suggested.length>1?`맛집 후보 ${suggested.length}곳 확인`:"맛집 찾기";
       connect.addEventListener("click",()=>openConnection(reel.url));
       remove.type="button";
       remove.className="chip";
