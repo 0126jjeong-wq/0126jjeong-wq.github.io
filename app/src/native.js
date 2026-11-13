@@ -88,6 +88,9 @@ window.ReelsInbox = {
 };
 if (native) {
   App.addListener('appStateChange', ({ isActive }) => {
-    if (isActive) window.dispatchEvent(new Event('reelsmap:shared-reels'));
+    if (isActive) {
+      window.dispatchEvent(new Event('reelsmap:app-resumed'));
+      window.dispatchEvent(new Event('reelsmap:shared-reels'));
+    }
   });
 }

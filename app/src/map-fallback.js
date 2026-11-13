@@ -43,6 +43,7 @@
       this.position = position;
       this.content = content;
       this.zIndex = zIndex;
+      L.DomEvent.disableClickPropagation(content);
       if (map) this.setMap(map);
     }
     setMap(map) {

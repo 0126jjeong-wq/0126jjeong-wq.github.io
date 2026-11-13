@@ -17,8 +17,10 @@
   if (parent === window || !/^[a-f0-9-]{36}$/.test(channel)) return;
   const send = (type, data = {}) => parent.postMessage({ channel, type, ...data }, "*");
   const overlays = new Map();
+  const pending = [];
   const point = ({lat,lng}) => new kakao.maps.LatLng(lat,lng);
   let map;
+  let mapObserver;
   // Rebuild the marker with only the elements and attributes the app uses.
   function safeMarker(html) {
     const root = new DOMParser().parseFromString(html, "text/html").body.firstElementChild;
@@ -39,15 +41,32 @@
     return root && copy(root);
   }
 
-  addEventListener("message", ({source,origin,data}) => {
-    if(source!==parent || !["capacitor://localhost","null"].includes(origin) || data?.channel!==channel || !window.kakao?.maps?.Map) return;
+  function applyMessage(data) {
     if(data.type==="init" && !map) {
-      map = new kakao.maps.Map(document.getElementById("map"), {center:point(data.center),level:data.level});
-      map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
-      kakao.maps.event.addListener(map,"zoom_changed",()=>send("zoom_changed",{level:map.getLevel()}));
-      kakao.maps.event.addListener(map,"click",event=>send("click",{point:{lat:event.latLng.getLat(),lng:event.latLng.getLng()}}));
+      const host=document.getElementById("map");
+      const create=()=>{
+        const rect=host.getBoundingClientRect();
+        if(!rect.width||!rect.height) return false;
+        map=new kakao.maps.Map(host,{center:point(data.center),level:data.level});
+        map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
+        kakao.maps.event.addListener(map,"zoom_changed",()=>send("zoom_changed",{level:map.getLevel()}));
+        kakao.maps.event.addListener(map,"click",event=>send("click",{point:{lat:event.latLng.getLat(),lng:event.latLng.getLng()}}));
+        mapObserver?.disconnect();
+        while(pending.length) applyMessage(pending.shift());
+        return true;
+      };
+      if(!create()) {
+        if(!mapObserver) {
+          mapObserver=new ResizeObserver(()=>create());
+          mapObserver.observe(host);
+        }
+        return;
+      }
     }
-    if(!map) return;
+    if(!map) {
+      if(data.type!=="init") pending.push(data);
+      return;
+    }
     switch(data.type) {
       case "min": map.setMinLevel(data.level); break;
       case "max": map.setMaxLevel(data.level); break;
@@ -75,6 +94,11 @@
         break;
       }
     }
+  }
+
+  addEventListener("message", ({source,origin,data}) => {
+    if(source!==parent || !["capacitor://localhost","null"].includes(origin) || data?.channel!==channel || !window.kakao?.maps?.Map) return;
+    applyMessage(data);
   });
   const sdk = document.createElement("script");
   sdk.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=45ac1c77b2d1d103f8d595ad8440f0c0&autoload=false";
