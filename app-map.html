@@ -21,7 +21,7 @@
   const point = ({lat,lng}) => new kakao.maps.LatLng(lat,lng);
   let map;
   let mapObserver;
-  let tileWatchdog;
+  let tilesLoaded = false;
   // Rebuild the marker with only the elements and attributes the app uses.
   function safeMarker(html) {
     const root = new DOMParser().parseFromString(html, "text/html").body.firstElementChild;
@@ -49,11 +49,11 @@
         const rect=host.getBoundingClientRect();
         if(!rect.width||!rect.height) return false;
         map=new kakao.maps.Map(host,{center:point(data.center),level:data.level});
+        kakao.maps.event.addListener(map,"tilesloaded",()=>{tilesLoaded=true;});
+        setTimeout(()=>{if(!tilesLoaded)send("tiles-unavailable");},10000);
         map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
         kakao.maps.event.addListener(map,"zoom_changed",()=>send("zoom_changed",{level:map.getLevel()}));
         kakao.maps.event.addListener(map,"click",event=>send("click",{point:{lat:event.latLng.getLat(),lng:event.latLng.getLng()}}));
-        kakao.maps.event.addListener(map,"tilesloaded",()=>{clearTimeout(tileWatchdog);send("tiles-loaded")});
-        tileWatchdog=setTimeout(()=>send("tiles-unavailable"),12000);
         mapObserver?.disconnect();
         while(pending.length) applyMessage(pending.shift());
         return true;
