@@ -6,7 +6,7 @@ import { build } from 'esbuild';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 await rm(join(root, 'dist'), { recursive: true, force: true });
 await mkdir(join(root, 'dist'));
-for (const file of ['index.html', 'policy.html', 'map-fallback.js', 'kakao-map-bridge.js']) {
+for (const file of ['index.html', 'policy.html', 'kakao-map-bridge.js']) {
   await cp(join(root, 'src', file), join(root, 'dist', file));
 }
 await cp(join(root, 'src', 'vendor'), join(root, 'dist', 'vendor'), { recursive: true });
