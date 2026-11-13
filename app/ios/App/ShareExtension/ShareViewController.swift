@@ -100,7 +100,7 @@ final class ShareViewController: UIViewController {
         for link in links where !existing.contains(link) { existing.append(link) }
         defaults.set(existing, forKey: key)
         save.isEnabled = false
-        message.text = "보관했어요. 릴스맛집지도 앱을 열어 ‘공유받은 릴스’를 확인해 주세요."
+        message.text = "보관했어요. 릴스맵 앱을 열면 ‘내 보관함’에서 확인할 수 있어요."
     }
     @objc private func close() { extensionContext?.completeRequest(returningItems: nil) }
 }
