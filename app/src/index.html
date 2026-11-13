@@ -735,7 +735,7 @@
     function renderRecommendations(){
       if(activeView!=="recommendations")return;
       const nickname=currentProfile?.nickname?.trim();
-      $("recommendationTitle").textContent=nickname?`${nickname}님이 좋아할 만한 업체`:"내 취향 맛집";
+      $("recommendationTitle").textContent=nickname?`${nickname}님이 좋아할 만한 맛집`:"내 취향 맛집";
       const note=$("recommendationOrderNote"), container=$("recommendedPlaces");
       if(!dataReady){
         note.textContent=loadingError?"등록된 맛집을 불러오지 못했어요.":"등록된 맛집을 불러오는 중이에요.";
