@@ -858,6 +858,16 @@
       setView("map");
       requestAnimationFrame(()=>mapReady&&$("mapWrap").offsetWidth&&map.relayout());
     });
+    let mapFallbackActivated=false;
+    window.addEventListener("reelsmap:map-tiles-unavailable",()=>{
+      if(mapFallbackActivated||location.protocol!=="capacitor:"||!window.switchKakaoMapToFallback)return;
+      mapFallbackActivated=true;
+      markerOverlays.forEach(overlay=>overlay.setMap(null));markerOverlays=[];
+      locationOverlay?.setMap(null);locationOverlay=null;mapReady=false;map=null;
+      window.switchKakaoMapToFallback($("map"));
+      initKakaoMap();
+      toast("카카오 지도를 불러오지 못해 대체 지도로 연결했어요.");
+    });
     document.addEventListener("click",event=>{const reel=event.target.closest("[data-track-reel]"),route=event.target.closest("[data-track-route]");if(reel)trackEngagement(reel.dataset.trackReel,"reel");else if(route)trackEngagement(route.dataset.trackRoute,"route")});
     document.addEventListener("click",event=>{const link=event.target.closest('a[href^="./policy.html"],a[href^="https://www.instagram.com/"],a[href^="https://instagram.com/"],a[href^="https://map.kakao.com/"],a[href^="https://myreelsmap.com/"]');if(!link||!window.ReelsNative?.enabled)return;event.preventDefault();const url=link.getAttribute("href").startsWith("./policy.html")?new URL(link.getAttribute("href"),"https://myreelsmap.com/").href:link.href;window.ReelsNative.open(url).catch(()=>toast("링크를 열지 못했어요"))});
     $("categoryFilters").addEventListener("click",event=>{const category=event.target.closest("[data-category]");if(!category)return;activeCategory=category.dataset.category;mapCategory=activeCategory;closePlaceSheet();applyFilters(true)});

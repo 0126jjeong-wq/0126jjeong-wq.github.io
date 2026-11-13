@@ -2,6 +2,13 @@
   const origins = new Set(["https://myreelsmap.com", "https://www.myreelsmap.com"]);
   const fallback = window.kakao.maps;
   const frames = new WeakMap();
+  window.switchKakaoMapToFallback = element => {
+    const connection = frames.get(element);
+    connection?.frame.remove();
+    element.replaceChildren();
+    window.kakao.maps = fallback;
+    return fallback;
+  };
 
   class HostedMap {
     constructor(element, options) {
@@ -62,6 +69,7 @@
     frame.sandbox = "allow-scripts allow-same-origin";
     frame.style.cssText = "display:block;width:100%;height:100%;border:0";
     const connection = {
+      frame,
       targetOrigin: null,
       send(type, data) { frame.contentWindow.postMessage({ channel, type, ...data }, this.targetOrigin || "*"); },
       onEvent: null
@@ -79,6 +87,10 @@
       if (!origins.has(event.origin) || event.source !== frame.contentWindow || event.data?.channel !== channel) return;
       connection.targetOrigin = event.origin;
       if (event.data.type === "unavailable") return fail();
+      if (event.data.type === "tiles-unavailable") {
+        window.dispatchEvent(new Event("reelsmap:map-tiles-unavailable"));
+        return;
+      }
       if (event.data.type === "ready" && !ready) {
         ready = true;
         clearTimeout(timeout);
