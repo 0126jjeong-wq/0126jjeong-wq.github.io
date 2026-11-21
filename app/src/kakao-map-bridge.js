@@ -91,7 +91,9 @@
         for (const [id, overlay] of this.overlays) {
           const label = overlay.content?.getAttribute?.("aria-label") || "";
           if (!label || label === "내 위치") continue;
-          places.push({ id, label: label.replace(/ · .* 지도 마커$/, ""), lat: overlay.position.lat, lng: overlay.position.lng });
+          const restaurant = window.mapRestaurantById?.get(String(id));
+          const bestViews = Math.max(0, ...(restaurant?.reels || []).map(reel => Number(reel.signal?.view_count) || 0));
+          places.push({ id, label: label.replace(/ · .* 지도 마커$/, ""), category: restaurant?.category || "식사", views: bestViews, lat: overlay.position.lat, lng: overlay.position.lng });
         }
         this.call("update", { rect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height }, cutouts, places });
       }
