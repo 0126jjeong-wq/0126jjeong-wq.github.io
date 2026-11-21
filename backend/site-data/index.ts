@@ -36,6 +36,11 @@ Deno.serve(async(req:Request)=>{
   if(routeError)console.warn("route count query failed",{code:routeError.code,message:routeError.message});
   const {data:signals,error:signalError}=await supabase.from("registered_reel_categories").select("media_id,permalink,creator_handle,posted_at,observed_at,view_count,view_delta,projected_24h_delta,post_age_group,million_reached,rapid_growth,measurement_status").limit(1000);
   const signalByCode=new Map((signals||[]).filter((m:any)=>reelCode(m.permalink)).map((m:any)=>[reelCode(m.permalink),m]));
+  const inboxIds=[...new Set((data||[]).map((row:any)=>row.inbox_id).filter(Boolean).map(String))];
+  const {data:inboxRows,error:inboxError}=inboxIds.length
+    ?await supabase.from("instagram_inbox").select("id,view_count,creator_handle").in("id",inboxIds)
+    :{data:[],error:null};
+  const inboxById=new Map((inboxRows||[]).map((row:any)=>[String(row.id),row]));
   const routeCounts=new Map((routeRows||[]).map((row:any)=>[String(row.restaurant_id),{week:Number(row.route_clicks_7d||0),all:Number(row.route_clicks_all||0)}]));
   const approvedPaths=[...new Set((data||[]).filter((row:any)=>row.image_rights_status==="approved"&&row.image_path).map((row:any)=>String(row.image_path)))];
   const signedPairs=await Promise.all(approvedPaths.map(async path=>{
@@ -46,8 +51,12 @@ Deno.serve(async(req:Request)=>{
   const restaurants=(data||[]).map((row:any)=>{
     const {image_rights_status,image_path,...publicRow}=row;
     const signal=signalByCode.get(reelCode(row.instagram_url));
-    const fresh=signal && Date.now()-Date.parse(signal.observed_at)<36*60*60*1000;
-    return {...publicRow,reel_signal:fresh?{posted_at:signal.posted_at,observed_at:signal.observed_at,view_count:signal.view_count,view_delta:signal.view_delta,projected_24h_delta:signal.projected_24h_delta,post_age_group:signal.post_age_group,million_reached:signal.million_reached,rapid_growth:signal.rapid_growth,measurement_status:signal.measurement_status}:null,image_url:image_rights_status==="approved"&&image_path?signedUrls.get(String(image_path))||null:null,route_clicks_7d:routeCounts.get(String(row.id))?.week||0,route_clicks_all:routeCounts.get(String(row.id))?.all||0};
+    const inbox=inboxById.get(String(row.inbox_id||""));
+    const signalViews=signal?.view_count!==null&&signal?.view_count!==undefined&&Number.isSafeInteger(Number(signal.view_count))?Number(signal.view_count):null;
+    const cachedViews=inbox?.view_count!==null&&inbox?.view_count!==undefined&&Number.isSafeInteger(Number(inbox.view_count))?Number(inbox.view_count):null;
+    const reelSignal=signal&&signalViews!==null?{posted_at:signal.posted_at,observed_at:signal.observed_at,view_count:signalViews,view_delta:signal.view_delta,projected_24h_delta:signal.projected_24h_delta,post_age_group:signal.post_age_group,million_reached:signalViews>=1000000,rapid_growth:signal.rapid_growth,measurement_status:signal.measurement_status}:cachedViews!==null?{posted_at:null,observed_at:null,view_count:cachedViews,view_delta:null,projected_24h_delta:null,post_age_group:null,million_reached:cachedViews>=1000000,rapid_growth:false,measurement_status:"cached"}:null;
+    return {...publicRow,creator_handle:publicRow.creator_handle||inbox?.creator_handle||null,reel_signal:reelSignal,image_url:image_rights_status==="approved"&&image_path?signedUrls.get(String(image_path))||null:null,route_clicks_7d:routeCounts.get(String(row.id))?.week||0,route_clicks_all:routeCounts.get(String(row.id))?.all||0};
   });
-  return json({ok:true,restaurants,stats:{restaurants:restaurants.length,reel_signals_available:!signalError}});
+  if(inboxError)console.warn("inbox view-count fallback unavailable",{code:inboxError.code});
+  return json({ok:true,restaurants,stats:{restaurants:restaurants.length,reel_signals_available:!signalError,inbox_view_counts_available:!inboxError}});
 });

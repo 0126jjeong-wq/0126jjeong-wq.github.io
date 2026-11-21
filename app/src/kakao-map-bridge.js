@@ -35,7 +35,9 @@
         };
         this.onNativeZoom = ({ detail }) => {
           if (activeNativeMap !== this) return;
-          this.level = Math.max(1, Math.min(21, Number(detail?.level || 8)));
+          const nextLevel = Math.max(1, Math.min(21, Number(detail?.level ?? 8)));
+          if (nextLevel === this.level) return;
+          this.level = nextLevel;
           this.emit("zoom_changed");
         };
         window.addEventListener("reelsmap:native-marker-tap", this.onMarkerTap);
@@ -89,12 +91,13 @@
           .map(control => ({ x: control.left, y: control.top, width: control.width, height: control.height }));
         const places = [];
         for (const [id, overlay] of this.overlays) {
-          const label = overlay.content?.getAttribute?.("aria-label") || "";
-          if (!label || label === "내 위치") continue;
+          const label = overlay.content?.getAttribute?.("aria-label") || overlay.content?.title || "";
+          if (!label) continue;
+          const isLocation = label === "내 위치";
           const isCluster = overlay.content?.classList?.contains("map-cluster") || false;
           const restaurant = window.mapRestaurantById?.get(String(id));
           const bestViews = Math.max(0, ...(restaurant?.reels || []).map(reel => Number(reel.signal?.view_count) || 0));
-          places.push({ id, label: label.replace(/ · .* 지도 마커$/, ""), category: restaurant?.category || "식사", views: bestViews, cluster: isCluster, count: isCluster ? Number(overlay.content.textContent) || 0 : 0, details: this.level <= 3, lat: overlay.position.lat, lng: overlay.position.lng });
+          places.push({ id, label: isLocation ? "내 위치" : label.replace(/ · .* 지도 마커$/, ""), location: isLocation, category: restaurant?.category || "식사", views: bestViews, cluster: isCluster, count: isCluster ? Number(overlay.content.textContent) || 0 : 0, details: this.level <= 3, lat: overlay.position.lat, lng: overlay.position.lng });
         }
         this.call("update", { rect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height }, cutouts, places });
       }

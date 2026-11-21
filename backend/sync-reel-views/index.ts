@@ -20,15 +20,16 @@ Deno.serve(async(req)=>{
  try{
  const {data:creators,error}=await db.from("reel_sync_creators").select("handle,last_attempt_at").eq("enabled",true).order("handle");
  if(error)throw new Error("Database creator read failed");
- const {data:registered,error:registeredError}=await db.from("restaurants").select("instagram_url,creator_handle").eq("status","published").limit(1000);
+ const {data:registered,error:registeredError}=await db.from("restaurants").select("inbox_id,instagram_url,creator_handle").eq("status","published").limit(1000);
  if(registeredError)throw new Error("Registered reels read failed");
- const handleCodes=new Map<string,Set<string>>();
+ const handleCodes=new Map<string,Map<string,Set<string>>>();
  for(const row of registered||[]){
   const code=canonical(row.instagram_url||"");
   const handle=String(row.creator_handle||"").replace(/^@/,"").toLowerCase();
   if(!code||!/^[a-z0-9._]{1,30}$/.test(handle))continue;
-  if(!handleCodes.has(handle))handleCodes.set(handle,new Set());
-  handleCodes.get(handle)!.add(code);
+  if(!handleCodes.has(handle))handleCodes.set(handle,new Map());
+  if(!handleCodes.get(handle)!.has(code))handleCodes.get(handle)!.set(code,new Set());
+  if(row.inbox_id)handleCodes.get(handle)!.get(code)!.add(String(row.inbox_id));
  }
  const selected=(creators||[]).filter(x=>handleCodes.has(x.handle.toLowerCase())).sort((a,b)=>Date.parse(a.last_attempt_at||"1970-01-01")-Date.parse(b.last_attempt_at||"1970-01-01")).slice(0,5);
  let authFailed=false;
@@ -36,7 +37,8 @@ Deno.serve(async(req)=>{
   try{
    if(!/^[a-zA-Z0-9._]{1,30}$/.test(handle))throw new Error("Invalid creator handle");
    const items:any[]=[];let cursor:string|undefined;let truncated=false;
-   const targets=handleCodes.get(handle.toLowerCase())!;
+    const targetMap=handleCodes.get(handle.toLowerCase())!;
+    const targets=new Set(targetMap.keys());
    for(let page=0;page<3;page++){
     const edge="media.limit(40)"+(cursor?".after("+cursor+")":"");
     const fields="business_discovery.username("+handle+"){username,"+edge+"{id,permalink,media_type,timestamp,view_count}}";
@@ -76,9 +78,11 @@ Deno.serve(async(req)=>{
     if(snap)throw new Error("Database snapshot write failed");
     saved++;
     if(views!==null){
-     const urls=["https://www.instagram.com/reel/"+canonical(m.permalink)+"/","https://www.instagram.com/p/"+canonical(m.permalink)+"/","https://www.instagram.com/reels/"+canonical(m.permalink)+"/"];
-     const {data:links,error:linkErr}=await db.from("instagram_inbox").update({view_count:views,meta_media_id:String(m.id)}).in("source_url",urls).select("id");
-     if(linkErr)throw new Error("Database link update failed");matched+=links?.length||0;
+     const inboxIds=[...(targetMap.get(canonical(m.permalink)!)||[])];
+     if(inboxIds.length){
+      const {data:links,error:linkErr}=await db.from("instagram_inbox").update({view_count:views,meta_media_id:String(m.id)}).in("id",inboxIds).select("id");
+      if(linkErr)throw new Error("Database link update failed");matched+=links?.length||0;
+     }
     }
    }
    await db.from("reel_sync_creators").update({last_success_at:observed,last_attempt_at:observed,last_error:null}).eq("handle",handle);

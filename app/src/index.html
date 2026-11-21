@@ -57,7 +57,7 @@
     body[data-view="saved"] .card-actions{flex-wrap:wrap}
     .unlinked-reels h2{margin:0;font-size:17px}
     .shared-reel-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}
-    .map-cluster{width:48px;height:48px;border:3px solid #fff;border-radius:50%;background:#17181b;color:#fff;box-shadow:0 6px 20px #0004;font-size:14px;font-weight:950;cursor:pointer}
+    .map-cluster{width:32px;height:32px;border:2px solid #fff;border-radius:50%;background:#ff4d2e;color:#fff;box-shadow:0 3px 10px #0003;font-size:10px;font-weight:850;cursor:pointer}
     .map-cluster:active{transform:scale(.94)}
     html,body{height:100%;height:100dvh}
     body{display:flex;flex-direction:column;overflow:hidden;padding:0}
@@ -280,7 +280,7 @@
     const PAGE_SIZE=10;
     const reelFilters=[{key:"million",label:"릴스 조회수 100만+"}];
     let restaurants=[],filtered=[],mapFiltered=[],activeCategory="전체",mapCategory="전체",activeReelFilter="",activeSort="default",activeView="map",activeId=null,userLocation=null,locationState="idle",currentPage=1;
-    let map=null,mapReady=false,locationOverlay=null,markerOverlays=[];
+    let map=null,mapReady=false,locationOverlay=null,markerOverlays=[],markerRenderTimer=0,expandedCluster=null,lastMarkerLayout="";
     const saved=new Set();
     let dataReady=false,loadingError=false;
     const VISITOR_KEY="reelsmap_visitor_v1";
@@ -386,7 +386,7 @@
       map.addControl(new kakao.maps.MapTypeControl(),kakao.maps.ControlPosition.TOPRIGHT);
       map.addControl(new kakao.maps.ZoomControl(),kakao.maps.ControlPosition.RIGHT);
       kakao.maps.event.addListener(map,"click",closePlaceSheet);
-      kakao.maps.event.addListener(map,"zoom_changed",()=>renderMarkers(false));
+      kakao.maps.event.addListener(map,"zoom_changed",()=>{clearTimeout(markerRenderTimer);markerRenderTimer=setTimeout(()=>renderMarkers(false),140)});
       mapReady=true;$("mapError").classList.add("hidden");renderMarkers();renderLocationMarker();
     }
     function closePlaceSheet(){activeId=null;$("placeSheet").classList.add("hidden");document.querySelectorAll(".card").forEach(c=>c.classList.remove("active"));markerById.forEach(item=>item.button.classList.remove("active"))}
@@ -434,10 +434,13 @@
       renderUnlinkedReels();renderPagination(totalPages);document.querySelectorAll(".visual.has-photo .visual-photo").forEach(img=>img.addEventListener("error",()=>{const visual=img.closest(".visual");visual?.classList.remove("has-photo");img.remove()}));renderMarkers();
     }
     function renderLocationMarker(){
+      if(!mapReady)return;
+      if(!userLocation){if(locationOverlay){locationOverlay.setMap(null);locationOverlay=null}return}
+      if(locationOverlay&&locationOverlay._lat===userLocation.lat&&locationOverlay._lng===userLocation.lng)return;
       if(locationOverlay){locationOverlay.setMap(null);locationOverlay=null}
-      if(!mapReady||!userLocation)return;
-      const dot=document.createElement("div");dot.className="my-location-dot";dot.title="내 위치";
+      const dot=document.createElement("div");dot.className="my-location-dot";dot.title="내 위치";dot.setAttribute("aria-label","내 위치");
       locationOverlay=new kakao.maps.CustomOverlay({map,position:new kakao.maps.LatLng(userLocation.lat,userLocation.lng),content:dot,xAnchor:.5,yAnchor:.5,zIndex:50});
+      locationOverlay._lat=userLocation.lat;locationOverlay._lng=userLocation.lng;
     }
     function updateMarkerAppearance(button,x){
       const image=cardImage(x),showPhoto=Boolean(image)&&button.dataset.photoBroken!=="1"&&mapReady&&map.getLevel()<=5;
@@ -447,23 +450,30 @@
     }
     function updateMarkerAppearances(){markerById.forEach(item=>updateMarkerAppearance(item.button,item.restaurant))}
     function renderMarkers(shouldFit=true){
-      markerOverlays.forEach(overlay=>overlay.setMap(null));markerOverlays=[];markerById.clear();if(!mapReady)return;
+      if(!mapReady)return;
       const level=map.getLevel();
+      if(expandedCluster&&level>expandedCluster.level){expandedCluster=null;lastMarkerLayout=""}
       const step=level>=9?.065:level>=8?.045:level>=7?.028:level>=6?.018:level>=5?.011:level>=4?.006:0;
       const groups=new Map();
       window.mapRestaurantById=new Map(mapFiltered.map(x=>[String(x.id),x]));
       mapFiltered.forEach(x=>{
         const lat=Number(x.latitude),lng=Number(x.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
-        const key=step&&String(x.id)!==String(activeId)?Math.floor(lat/step)+":"+Math.floor(lng/step):String(x.id);
+        const id=String(x.id),expanded=expandedCluster?.ids.has(id);
+        const key=step&&id!==String(activeId)&&!expanded?Math.floor(lat/step)+":"+Math.floor(lng/step):id;
         if(!groups.has(key))groups.set(key,[]);groups.get(key).push({x,lat,lng});
       });
+      const layoutKey=JSON.stringify([String(activeId),[...groups].map(([key,group])=>[key,group.map(item=>[String(item.x.id),item.x.name,item.x.category,Math.max(0,...(item.x.reels||[]).map(reel=>Number(reel.signal?.view_count)||0))]).sort((a,b)=>a[0].localeCompare(b[0])),group.length===1&&(level<=3||expandedCluster?.ids.has(String(group[0].x.id))),group[0].lat,group[0].lng])]);
+      if(layoutKey===lastMarkerLayout){renderLocationMarker();return}
+      lastMarkerLayout=layoutKey;
+      markerOverlays.forEach(overlay=>overlay.setMap(null));markerOverlays=[];markerById.clear();
       groups.forEach(group=>{
         const lat=group.reduce((sum,item)=>sum+item.lat,0)/group.length,lng=group.reduce((sum,item)=>sum+item.lng,0)/group.length;
         const position=new kakao.maps.LatLng(lat,lng);
         if(group.length>1){
           const button=document.createElement("button");button.type="button";button.className="map-cluster";button.textContent=String(group.length);
           button.setAttribute("aria-label",`이 근처 맛집 ${group.length}곳 보기`);
-          button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();kakao.maps.event.preventMap();map.moveTo(position,Math.max(3,level-2))});
+          const memberIds=new Set(group.map(item=>String(item.x.id)));
+          button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();kakao.maps.event.preventMap();expandedCluster={ids:memberIds,level:Math.min(3,Math.max(1,level-2))};lastMarkerLayout="";map.moveTo(position,expandedCluster.level);clearTimeout(markerRenderTimer);markerRenderTimer=setTimeout(()=>renderMarkers(false),180)});
           markerOverlays.push(new kakao.maps.CustomOverlay({map,position,content:button,xAnchor:.5,yAnchor:.5,zIndex:20}));
           return;
         }

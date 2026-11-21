@@ -55,6 +55,7 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
     private var mapCutouts: [CGRect] = []
     private var visiblePlaceIDs: [String: String] = [:]
     private var registeredClusterStyleIDs = Set<String>()
+    private var lastRenderedPlacesSignature: String?
 
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(SharedReelsPlugin())
@@ -124,6 +125,10 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
     private func refreshNativePlaces() {
         guard let map = kakaoMapController?.getView("reelsmap") as? KakaoMap,
               let layer = map.getLabelManager().getLabelLayer(layerID: "reelsmap-places") else { return }
+        let signatureData = (try? JSONSerialization.data(withJSONObject: pendingPlaces, options: [.sortedKeys])) ?? Data()
+        let signature = signatureData.base64EncodedString()
+        guard signature != lastRenderedPlacesSignature else { return }
+        lastRenderedPlacesSignature = signature
         let oldIDs = layer.getAllPois()?.map { $0.itemID } ?? []
         if !oldIDs.isEmpty { layer.removePois(poiIDs: oldIDs) }
         visiblePlaceIDs = [:]
@@ -132,13 +137,28 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
                   lat.isFinite, lng.isFinite else { continue }
             let id = String(describing: place["id"] ?? index)
             let poiID = "reelsmap-poi-\(index)"
+            if place["location"] as? Bool == true {
+                let styleID = "reelsmap-user-location"
+                if registeredClusterStyleIDs.insert(styleID).inserted {
+                    let icon = PoiIconStyle(symbol: Self.makeLocationImage(), anchorPoint: CGPoint(x: 0.5, y: 0.5))
+                    let text = PoiTextStyle(textLineStyles: [])
+                    map.getLabelManager().addPoiStyle(PoiStyle(styleID: styleID, styles: [PerLevelPoiStyle(iconStyle: icon, textStyle: text, level: 0)]))
+                }
+                let option = PoiOptions(styleID: styleID, poiID: poiID)
+                option.rank = 10
+                if let poi = layer.addPoi(option: option, at: MapPoint(longitude: lng, latitude: lat)) {
+                    poi.show()
+                    visiblePlaceIDs[poiID] = id
+                }
+                continue
+            }
             let isCluster = place["cluster"] as? Bool ?? false
             if isCluster {
                 let count = place["count"] as? Int ?? 0
                 let displayCount = count > 99 ? "99+" : String(count)
                 let styleID = "reelsmap-cluster-\(displayCount)"
                 if registeredClusterStyleIDs.insert(styleID).inserted {
-                    let clusterText = TextStyle(fontSize: 14, fontColor: .white, strokeThickness: 0, strokeColor: .clear)
+                    let clusterText = TextStyle(fontSize: 10, fontColor: .white, strokeThickness: 0, strokeColor: .clear)
                     let clusterLabel = PoiTextStyle(textLineStyles: [PoiTextLineStyle(textStyle: clusterText)])
                     let clusterIcon = PoiIconStyle(symbol: Self.makeClusterImage(count: displayCount), anchorPoint: CGPoint(x: 0.5, y: 0.5))
                     map.getLabelManager().addPoiStyle(PoiStyle(styleID: styleID, styles: [PerLevelPoiStyle(iconStyle: clusterIcon, textStyle: clusterLabel, level: 0)]))
@@ -160,10 +180,10 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
             let label = String(describing: place["label"] ?? "맛집")
             if place["details"] as? Bool == true {
                 let views = place["views"] as? Int ?? 0
-                let viewText = views > 0 ? "릴스 최고 \(Self.shortCount(views))회" : "릴스 조회수 확인 중"
-                option.addText(PoiText(text: String(label.prefix(14)), styleIndex: 0))
-                option.addText(PoiText(text: category, styleIndex: 0))
-                option.addText(PoiText(text: viewText, styleIndex: 0))
+                let viewText = views > 0 ? "릴스 최고 \(Self.shortCount(views))회" : "조회수 미수집"
+                option.addText(PoiText(text: label, styleIndex: 0))
+                option.addText(PoiText(text: category, styleIndex: 1))
+                option.addText(PoiText(text: viewText, styleIndex: 2))
             }
             guard let poi = layer.addPoi(option: option, at: MapPoint(longitude: lng, latitude: lat)) else { continue }
             poi.userObject = id as NSString
@@ -193,8 +213,9 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
         let manager = map.getLabelManager()
         let layer = LabelLayerOptions(layerID: "reelsmap-places", competitionType: .none, competitionUnit: .symbolFirst, orderType: .rank, zOrder: 1000)
         _ = manager.addLabelLayer(option: layer)
-        let textStyle = TextStyle(fontSize: 12, fontColor: .black, strokeThickness: 2, strokeColor: .white)
-        let text = PoiTextStyle(textLineStyles: [PoiTextLineStyle(textStyle: textStyle)])
+        let titleStyle = TextStyle(fontSize: 36, fontColor: .black, strokeThickness: 3, strokeColor: .white)
+        let detailStyle = TextStyle(fontSize: 14, fontColor: .darkGray, strokeThickness: 2, strokeColor: .white)
+        let text = PoiTextStyle(textLineStyles: [PoiTextLineStyle(textStyle: titleStyle), PoiTextLineStyle(textStyle: detailStyle), PoiTextLineStyle(textStyle: detailStyle)])
         text.textLayouts = [.bottom]
         for category in ["식사", "일식", "양식", "카페·디저트", "술집"] {
             let icon = PoiIconStyle(symbol: Self.makeMarkerImage(category: category), anchorPoint: CGPoint(x: 0.5, y: 1.0))
@@ -270,17 +291,29 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
     }
 
     private static func makeClusterImage(count: String) -> UIImage {
-        let size = CGSize(width: 48, height: 48)
+        let size = CGSize(width: 32, height: 32)
         return UIGraphicsImageRenderer(size: size).image { context in
-            let circle = CGRect(x: 2, y: 2, width: 44, height: 44)
-            context.cgContext.setShadow(offset: CGSize(width: 0, height: 3), blur: 7, color: UIColor.black.withAlphaComponent(0.2).cgColor)
+            let circle = CGRect(x: 1, y: 1, width: 30, height: 30)
+            context.cgContext.setShadow(offset: CGSize(width: 0, height: 2), blur: 4, color: UIColor.black.withAlphaComponent(0.18).cgColor)
             UIColor(red: 1, green: 0.29, blue: 0.20, alpha: 1).setFill()
             context.cgContext.fillEllipse(in: circle)
             context.cgContext.setShadow(offset: .zero, blur: 0, color: nil)
             let paragraph = NSMutableParagraphStyle()
             paragraph.alignment = .center
-            let attributes: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: count.count > 2 ? 12 : 15, weight: .bold), .foregroundColor: UIColor.white, .paragraphStyle: paragraph]
-            count.draw(in: CGRect(x: 4, y: 14, width: 40, height: 20), withAttributes: attributes)
+            let attributes: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: count.count > 2 ? 8 : 10, weight: .bold), .foregroundColor: UIColor.white, .paragraphStyle: paragraph]
+            count.draw(in: CGRect(x: 2, y: 9, width: 28, height: 14), withAttributes: attributes)
+        }
+    }
+
+    private static func makeLocationImage() -> UIImage {
+        let size = CGSize(width: 28, height: 28)
+        return UIGraphicsImageRenderer(size: size).image { context in
+            context.cgContext.setShadow(offset: .zero, blur: 5, color: UIColor.systemBlue.withAlphaComponent(0.38).cgColor)
+            UIColor.white.setFill()
+            context.cgContext.fillEllipse(in: CGRect(x: 1, y: 1, width: 26, height: 26))
+            context.cgContext.setShadow(offset: .zero, blur: 0, color: nil)
+            UIColor.systemBlue.setFill()
+            context.cgContext.fillEllipse(in: CGRect(x: 6, y: 6, width: 16, height: 16))
         }
     }
 }
