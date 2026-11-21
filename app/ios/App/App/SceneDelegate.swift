@@ -54,6 +54,7 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
     private var mapFrame = CGRect.zero
     private var mapCutouts: [CGRect] = []
     private var visiblePlaceIDs: [String: String] = [:]
+    private var registeredClusterStyleIDs = Set<String>()
 
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(SharedReelsPlugin())
@@ -131,17 +132,39 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
                   lat.isFinite, lng.isFinite else { continue }
             let id = String(describing: place["id"] ?? index)
             let poiID = "reelsmap-poi-\(index)"
+            let isCluster = place["cluster"] as? Bool ?? false
+            if isCluster {
+                let count = place["count"] as? Int ?? 0
+                let displayCount = count > 99 ? "99+" : String(count)
+                let styleID = "reelsmap-cluster-\(displayCount)"
+                if registeredClusterStyleIDs.insert(styleID).inserted {
+                    let clusterText = TextStyle(fontSize: 14, fontColor: .white, strokeThickness: 0, strokeColor: .clear)
+                    let clusterLabel = PoiTextStyle(textLineStyles: [PoiTextLineStyle(textStyle: clusterText)])
+                    let clusterIcon = PoiIconStyle(symbol: Self.makeClusterImage(count: displayCount), anchorPoint: CGPoint(x: 0.5, y: 0.5))
+                    map.getLabelManager().addPoiStyle(PoiStyle(styleID: styleID, styles: [PerLevelPoiStyle(iconStyle: clusterIcon, textStyle: clusterLabel, level: 0)]))
+                }
+                let option = PoiOptions(styleID: styleID, poiID: poiID)
+                option.clickable = true
+                option.rank = 2
+                guard let poi = layer.addPoi(option: option, at: MapPoint(longitude: lng, latitude: lat)) else { continue }
+                poi.userObject = id as NSString
+                poi.show()
+                visiblePlaceIDs[poiID] = id
+                continue
+            }
             let category = String(describing: place["category"] ?? "식사")
             let poiStyleID = "reelsmap-pin-\(category)"
             let option = PoiOptions(styleID: poiStyleID, poiID: poiID)
             option.clickable = true
             option.rank = 1
             let label = String(describing: place["label"] ?? "맛집")
-            let views = place["views"] as? Int ?? 0
-            let viewText = views > 0 ? "릴스 최고 \(Self.shortCount(views))회" : "릴스 조회수 확인 중"
-            option.addText(PoiText(text: String(label.prefix(14)), styleIndex: 0))
-            option.addText(PoiText(text: category, styleIndex: 0))
-            option.addText(PoiText(text: viewText, styleIndex: 0))
+            if place["details"] as? Bool == true {
+                let views = place["views"] as? Int ?? 0
+                let viewText = views > 0 ? "릴스 최고 \(Self.shortCount(views))회" : "릴스 조회수 확인 중"
+                option.addText(PoiText(text: String(label.prefix(14)), styleIndex: 0))
+                option.addText(PoiText(text: category, styleIndex: 0))
+                option.addText(PoiText(text: viewText, styleIndex: 0))
+            }
             guard let poi = layer.addPoi(option: option, at: MapPoint(longitude: lng, latitude: lat)) else { continue }
             poi.userObject = id as NSString
             poi.show()
@@ -224,20 +247,40 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
     }
 
     private static func makeMarkerImage(category: String) -> UIImage {
-        let size = CGSize(width: 36, height: 44)
+        let size = CGSize(width: 40, height: 46)
         return UIGraphicsImageRenderer(size: size).image { context in
-            let circle = CGRect(x: 2, y: 1, width: 32, height: 32)
+            let circle = CGRect(x: 3, y: 1, width: 34, height: 34)
             let colors: [String: UIColor] = ["식사": .white, "일식": UIColor(red: 1, green: 0.47, blue: 0, alpha: 1), "양식": UIColor(red: 0.48, green: 0.25, blue: 0.78, alpha: 1), "카페·디저트": UIColor(red: 0.96, green: 0.77, blue: 0, alpha: 1), "술집": UIColor(red: 0.10, green: 0.11, blue: 0.13, alpha: 1)]
             let fill = colors[category] ?? UIColor(red: 1, green: 0.29, blue: 0.20, alpha: 1)
+            context.cgContext.setShadow(offset: CGSize(width: 0, height: 2), blur: 4, color: UIColor.black.withAlphaComponent(0.22).cgColor)
             fill.setFill()
             context.cgContext.fillEllipse(in: circle)
-            UIColor.white.setFill()
-            context.cgContext.fillEllipse(in: CGRect(x: 10, y: 9, width: 16, height: 16))
+            UIColor(red: 1, green: 0.29, blue: 0.20, alpha: 1).setStroke()
+            context.cgContext.setLineWidth(category == "식사" ? 2 : 0)
+            context.cgContext.strokeEllipse(in: circle.insetBy(dx: 1, dy: 1))
+            context.cgContext.setShadow(offset: .zero, blur: 0, color: nil)
+            let symbols: [String: String] = ["식사": "fork.knife", "일식": "fish", "양식": "takeoutbag.and.cup.and.straw", "카페·디저트": "cup.and.saucer.fill", "술집": "wineglass.fill"]
+            let symbol = UIImage(systemName: symbols[category] ?? "fork.knife")?.withTintColor(category == "식사" ? UIColor(red: 1, green: 0.29, blue: 0.20, alpha: 1) : .white, renderingMode: .alwaysOriginal)
+            symbol?.draw(in: CGRect(x: 12, y: 10, width: 16, height: 16))
+            fill.setFill()
+            let tip = UIBezierPath()
+            tip.move(to: CGPoint(x: 13, y: 31)); tip.addLine(to: CGPoint(x: 20, y: 44)); tip.addLine(to: CGPoint(x: 27, y: 31)); tip.close()
+            tip.fill()
+        }
+    }
+
+    private static func makeClusterImage(count: String) -> UIImage {
+        let size = CGSize(width: 48, height: 48)
+        return UIGraphicsImageRenderer(size: size).image { context in
+            let circle = CGRect(x: 2, y: 2, width: 44, height: 44)
+            context.cgContext.setShadow(offset: CGSize(width: 0, height: 3), blur: 7, color: UIColor.black.withAlphaComponent(0.2).cgColor)
             UIColor(red: 1, green: 0.29, blue: 0.20, alpha: 1).setFill()
-            context.cgContext.fillEllipse(in: CGRect(x: 15, y: 14, width: 6, height: 6))
-            let path = UIBezierPath()
-            path.move(to: CGPoint(x: 10, y: 27)); path.addLine(to: CGPoint(x: 18, y: 43)); path.addLine(to: CGPoint(x: 26, y: 27)); path.close()
-            UIColor(red: 1, green: 0.29, blue: 0.20, alpha: 1).setFill(); path.fill()
+            context.cgContext.fillEllipse(in: circle)
+            context.cgContext.setShadow(offset: .zero, blur: 0, color: nil)
+            let paragraph = NSMutableParagraphStyle()
+            paragraph.alignment = .center
+            let attributes: [NSAttributedString.Key: Any] = [.font: UIFont.systemFont(ofSize: count.count > 2 ? 12 : 15, weight: .bold), .foregroundColor: UIColor.white, .paragraphStyle: paragraph]
+            count.draw(in: CGRect(x: 4, y: 14, width: 40, height: 20), withAttributes: attributes)
         }
     }
 }
