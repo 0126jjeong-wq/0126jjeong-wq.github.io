@@ -1,4 +1,133 @@
 (() => {
+  if (window.ReelsNative?.enabled && window.KakaoNativeMap) {
+    const plugin = window.KakaoNativeMap;
+    let nextMapId = 0;
+    let activeNativeMap = null;
+    class LatLng {
+      constructor(lat, lng) { this.lat = Number(lat); this.lng = Number(lng); }
+      getLat() { return this.lat; }
+      getLng() { return this.lng; }
+    }
+    class LatLngBounds {
+      constructor() { this.points = []; }
+      extend(point) { this.points.push({ lat: point.lat, lng: point.lng }); }
+    }
+    class NativeMap {
+      constructor(element, options = {}) {
+        this.id = ++nextMapId;
+        this.element = element;
+        this.level = options.level ?? 8;
+        this.listeners = new Map();
+        this.overlays = new Map();
+        this.nextOverlayId = 0;
+        this.syncTimer = 0;
+        this.onMarkerTap = ({ detail }) => {
+          if (activeNativeMap !== this) return;
+          const overlay = this.overlays.get(String(detail?.id));
+          overlay?.content?.click();
+        };
+        this.onMapTap = ({ detail }) => {
+          if (activeNativeMap !== this) return;
+          const latLng = detail && Number.isFinite(detail.lat) && Number.isFinite(detail.lng)
+            ? new LatLng(detail.lat, detail.lng) : undefined;
+          this.emit("click", latLng ? { latLng } : undefined);
+        };
+        this.onNativeZoom = ({ detail }) => {
+          if (activeNativeMap !== this) return;
+          this.level = Math.max(1, Math.min(21, Number(detail?.level || 8)));
+          this.emit("zoom_changed");
+        };
+        window.addEventListener("reelsmap:native-marker-tap", this.onMarkerTap);
+        window.addEventListener("reelsmap:native-map-tap", this.onMapTap);
+        window.addEventListener("reelsmap:native-zoom", this.onNativeZoom);
+        this.resizeObserver = new ResizeObserver(() => this.scheduleSync());
+        this.resizeObserver.observe(element);
+        this.onViewportChange = () => this.scheduleSync();
+        window.addEventListener("resize", this.onViewportChange, { passive: true });
+        window.addEventListener("scroll", this.onViewportChange, { passive: true, capture: true });
+        this.setCenter(options.center || new LatLng(37.5665, 126.978));
+        this.scheduleSync();
+      }
+      addControl() {}
+      setMinLevel() {}
+      setMaxLevel() {}
+      getLevel() { return this.level; }
+      setLevel(level) { this.level = Number(level); this.call("move", { lat: this.center.lat, lng: this.center.lng, level: this.level }); }
+      setCenter(point) { this.center = point; this.call("move", { lat: point.lat, lng: point.lng, level: this.level }); }
+      moveTo(point, level) {
+        this.center = point;
+        if (Number.isFinite(Number(level))) this.level = Number(level);
+        this.call("move", { lat: point.lat, lng: point.lng, level: this.level });
+      }
+      setBounds(bounds) {
+        const points = bounds?.points || [];
+        if (points.length) this.call("bounds", { points, padding: 48 });
+      }
+      relayout() { this.scheduleSync(); }
+      addListener(name, callback) {
+        if (!this.listeners.has(name)) this.listeners.set(name, []);
+        this.listeners.get(name).push(callback);
+      }
+      emit(name, value) { for (const callback of this.listeners.get(name) || []) callback(value); }
+      call(method, payload = {}) { return plugin[method](payload).catch(error => console.error("Kakao Maps SDK", error)); }
+      scheduleSync() {
+        clearTimeout(this.syncTimer);
+        this.syncTimer = setTimeout(() => this.sync(), 70);
+      }
+      sync() {
+        if (!this.element.isConnected) return;
+        const picker = this.element.id === "privatePlaceMap";
+        const pickerDialog = document.querySelector("#connectReelDialog");
+        if (picker && (!pickerDialog?.open || !pickerDialog.querySelector("details")?.open)) return;
+        if (!picker && pickerDialog?.open) return;
+        activeNativeMap = this;
+        const rect = this.element.getBoundingClientRect();
+        const cutouts = [...document.querySelectorAll(".map-card, #mapCategoryFilter, .map-tools, #placeSheet, #mapError, #connectReelDialog")]
+          .map(control => control.getBoundingClientRect())
+          .filter(control => control.width > 0 && control.height > 0 && control.right > rect.left && control.left < rect.right && control.bottom > rect.top && control.top < rect.bottom)
+          .map(control => ({ x: control.left, y: control.top, width: control.width, height: control.height }));
+        const places = [];
+        for (const [id, overlay] of this.overlays) {
+          const label = overlay.content?.getAttribute?.("aria-label") || "";
+          if (!label || label === "내 위치") continue;
+          places.push({ id, label: label.replace(/ · .* 지도 마커$/, ""), lat: overlay.position.lat, lng: overlay.position.lng });
+        }
+        this.call("update", { rect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height }, cutouts, places });
+      }
+    }
+    class NativeOverlay {
+      constructor(options) {
+        this.position = options.position;
+        this.content = options.content;
+        this.id = String(options.content?.getAttribute?.("data-native-map-id") || "");
+        this.map = null;
+        this.observer = new MutationObserver(() => this.map?.scheduleSync());
+        this.observer.observe(this.content, { attributes: true, childList: true, subtree: true });
+        this.setMap(options.map);
+      }
+      setMap(map) {
+        if (this.map) this.map.overlays.delete(this.id);
+        this.map = map;
+        if (!map) return;
+        if (!this.id || map.overlays.has(this.id)) this.id = `overlay-${++map.nextOverlayId}`;
+        this.content.setAttribute("data-native-map-id", this.id);
+        map.overlays.set(this.id, this);
+        map.scheduleSync();
+      }
+    }
+    window.prepareKakaoMap = async element => ({
+      Map: NativeMap, LatLng, LatLngBounds, CustomOverlay: NativeOverlay,
+      MapTypeControl: class {}, ZoomControl: class {},
+      ControlPosition: { TOPRIGHT: 0, RIGHT: 1 },
+      event: {
+        addListener(map, name, callback) { map.addListener(name, callback); },
+        preventMap() {}
+      }
+    });
+    window.addEventListener("reelsmap:native-map-error", () => window.dispatchEvent(new CustomEvent("reelsmap:kakao-tiles-error")));
+    return;
+  }
+
   const origins = new Set(["https://myreelsmap.com", "https://www.myreelsmap.com"]);
   const frames = new WeakMap();
 
