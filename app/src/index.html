@@ -448,7 +448,8 @@
     function renderMarkers(shouldFit=true){
       markerOverlays.forEach(overlay=>overlay.setMap(null));markerOverlays=[];markerById.clear();if(!mapReady)return;
       const level=map.getLevel();
-      const step=level>=9?.065:level>=8?.045:level>=7?.028:level>=6?.018:level>=5?.011:level>=4?.006:0;
+      const nativePins=window.ReelsNative?.enabled && window.KakaoNativeMap;
+      const step=nativePins?0:level>=9?.065:level>=8?.045:level>=7?.028:level>=6?.018:level>=5?.011:level>=4?.006:0;
       const groups=new Map();
       mapFiltered.forEach(x=>{
         const lat=Number(x.latitude),lng=Number(x.longitude);if(!Number.isFinite(lat)||!Number.isFinite(lng))return;
