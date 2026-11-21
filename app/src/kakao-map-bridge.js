@@ -1,6 +1,7 @@
 (() => {
   if (window.ReelsNative?.enabled && window.KakaoNativeMap) {
     const plugin = window.KakaoNativeMap;
+    window.kakao ??= {};
     let nextMapId = 0;
     let activeNativeMap = null;
     class LatLng {
