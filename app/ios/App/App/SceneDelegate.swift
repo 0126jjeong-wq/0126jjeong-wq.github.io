@@ -131,11 +131,17 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
                   lat.isFinite, lng.isFinite else { continue }
             let id = String(describing: place["id"] ?? index)
             let poiID = "reelsmap-poi-\(index)"
-            let option = PoiOptions(styleID: "reelsmap-pin", poiID: poiID)
+            let category = String(describing: place["category"] ?? "식사")
+            let poiStyleID = "reelsmap-pin-\(category)"
+            let option = PoiOptions(styleID: poiStyleID, poiID: poiID)
             option.clickable = true
             option.rank = 1
             let label = String(describing: place["label"] ?? "맛집")
-            option.addText(PoiText(text: String(label.prefix(16)), styleIndex: 0))
+            let views = place["views"] as? Int ?? 0
+            let viewText = views > 0 ? "릴스 최고 \(Self.shortCount(views))회" : "릴스 조회수 확인 중"
+            option.addText(PoiText(text: String(label.prefix(14)), styleIndex: 0))
+            option.addText(PoiText(text: category, styleIndex: 0))
+            option.addText(PoiText(text: viewText, styleIndex: 0))
             guard let poi = layer.addPoi(option: option, at: MapPoint(longitude: lng, latitude: lat)) else { continue }
             poi.userObject = id as NSString
             poi.show()
@@ -164,12 +170,13 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
         let manager = map.getLabelManager()
         let layer = LabelLayerOptions(layerID: "reelsmap-places", competitionType: .none, competitionUnit: .symbolFirst, orderType: .rank, zOrder: 1000)
         _ = manager.addLabelLayer(option: layer)
-        let markerImage = Self.makeMarkerImage()
-        let icon = PoiIconStyle(symbol: markerImage, anchorPoint: CGPoint(x: 0.5, y: 1.0))
         let textStyle = TextStyle(fontSize: 12, fontColor: .black, strokeThickness: 2, strokeColor: .white)
         let text = PoiTextStyle(textLineStyles: [PoiTextLineStyle(textStyle: textStyle)])
         text.textLayouts = [.bottom]
-        manager.addPoiStyle(PoiStyle(styleID: "reelsmap-pin", styles: [PerLevelPoiStyle(iconStyle: icon, textStyle: text, level: 0)]))
+        for category in ["식사", "일식", "양식", "카페·디저트", "술집"] {
+            let icon = PoiIconStyle(symbol: Self.makeMarkerImage(category: category), anchorPoint: CGPoint(x: 0.5, y: 1.0))
+            manager.addPoiStyle(PoiStyle(styleID: "reelsmap-pin-\(category)", styles: [PerLevelPoiStyle(iconStyle: icon, textStyle: text, level: 0)]))
+        }
         map.viewRect = CGRect(origin: .zero, size: mapFrame.size)
         refreshNativePlaces()
     }
@@ -210,11 +217,19 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
         kakaoMapController?.pauseEngine()
     }
 
-    private static func makeMarkerImage() -> UIImage {
+    private static func shortCount(_ value: Int) -> String {
+        if value >= 10_000 { return String(format: "%.1f만", Double(value) / 10_000).replacingOccurrences(of: ".0", with: "") }
+        if value >= 1_000 { return String(format: "%.1f천", Double(value) / 1_000).replacingOccurrences(of: ".0", with: "") }
+        return String(value)
+    }
+
+    private static func makeMarkerImage(category: String) -> UIImage {
         let size = CGSize(width: 36, height: 44)
         return UIGraphicsImageRenderer(size: size).image { context in
             let circle = CGRect(x: 2, y: 1, width: 32, height: 32)
-            UIColor(red: 1, green: 0.29, blue: 0.20, alpha: 1).setFill()
+            let colors: [String: UIColor] = ["식사": .white, "일식": UIColor(red: 1, green: 0.47, blue: 0, alpha: 1), "양식": UIColor(red: 0.48, green: 0.25, blue: 0.78, alpha: 1), "카페·디저트": UIColor(red: 0.96, green: 0.77, blue: 0, alpha: 1), "술집": UIColor(red: 0.10, green: 0.11, blue: 0.13, alpha: 1)]
+            let fill = colors[category] ?? UIColor(red: 1, green: 0.29, blue: 0.20, alpha: 1)
+            fill.setFill()
             context.cgContext.fillEllipse(in: circle)
             UIColor.white.setFill()
             context.cgContext.fillEllipse(in: CGRect(x: 10, y: 9, width: 16, height: 16))
