@@ -77,11 +77,11 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
                 self.view.addSubview(host)
                 let controller = KMController(viewContainer: container)
                 self.kakaoMapController = controller
-                controller?.delegate = self
-                controller?.prepareEngine()
+                controller.delegate = self
+                controller.prepareEngine()
                 // The native map host is created after the Capacitor view has appeared,
                 // so viewWillAppear may already have run before the engine existed.
-                controller?.activateEngine()
+                controller.activateEngine()
                 return
             }
             host.frame = frame
@@ -167,7 +167,8 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
         let markerImage = Self.makeMarkerImage()
         let icon = PoiIconStyle(symbol: markerImage, anchorPoint: CGPoint(x: 0.5, y: 1.0))
         let textStyle = TextStyle(fontSize: 12, fontColor: .black, strokeThickness: 2, strokeColor: .white)
-        let text = PoiTextStyle(textLineStyles: [PoiTextLineStyle(textStyle: textStyle, textLayout: .bottom)])
+        let text = PoiTextStyle(textLineStyles: [PoiTextLineStyle(textStyle: textStyle)])
+        text.textLayouts = [.bottom]
         manager.addPoiStyle(PoiStyle(styleID: "reelsmap-pin", styles: [PerLevelPoiStyle(iconStyle: icon, textStyle: text, level: 0)]))
         map.viewRect = CGRect(origin: .zero, size: mapFrame.size)
         refreshNativePlaces()
