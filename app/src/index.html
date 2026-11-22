@@ -473,7 +473,7 @@
           const button=document.createElement("button");button.type="button";button.className="map-cluster";button.textContent=String(group.length);
           button.setAttribute("aria-label",`이 근처 맛집 ${group.length}곳 보기`);
           const memberIds=new Set(group.map(item=>String(item.x.id)));
-          button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();kakao.maps.event.preventMap();const expandedLevel=Math.min(6,Math.max(1,level-2));expandedCluster={ids:memberIds,level:expandedLevel};lastMarkerLayout="";map.moveTo(position,expandedLevel);clearTimeout(markerRenderTimer);markerRenderTimer=setTimeout(()=>renderMarkers(false),180)});
+          button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();kakao.maps.event.preventMap();const expandedLevel=Math.min(5,Math.max(1,level-2));expandedCluster={ids:memberIds,level:expandedLevel};lastMarkerLayout="";map.moveTo(position,expandedLevel);clearTimeout(markerRenderTimer);markerRenderTimer=setTimeout(()=>renderMarkers(false),180)});
           markerOverlays.push(new kakao.maps.CustomOverlay({map,position,content:button,xAnchor:.5,yAnchor:.5,zIndex:20}));
           return;
         }
