@@ -177,9 +177,9 @@
       }
 
       // Let the map show its existing loading/error state on a slow connection.
-      const deadline = setTimeout(finish, 1400);
+      const deadline = setTimeout(finish, 3000);
       window.addEventListener("reelsmap:startup-ready", () => {
-        const minimum = reducedMotion ? 0 : 680;
+        const minimum = reducedMotion ? 0 : 3000;
         setTimeout(finish, Math.max(0, minimum - (performance.now() - startedAt)));
       }, { once: true });
     })();
