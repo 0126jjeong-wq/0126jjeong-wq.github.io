@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
   <meta name="theme-color" content="#ff4d2e">
   <meta name="reelsmap-build" content="2026-11-13-ios-library">
   <meta name="description" content="위치가 확인된 서울 맛집을 지도에서 찾고 관련 Instagram 릴스로 분위기를 확인하세요.">
@@ -179,7 +179,7 @@
       // Let the map show its existing loading/error state on a slow connection.
       const deadline = setTimeout(finish, 3000);
       window.addEventListener("reelsmap:startup-ready", () => {
-        const minimum = reducedMotion ? 0 : 3000;
+        const minimum = 3000;
         setTimeout(finish, Math.max(0, minimum - (performance.now() - startedAt)));
       }, { once: true });
     })();
@@ -453,7 +453,7 @@
       if(!mapReady)return;
       const level=map.getLevel();
       if(expandedCluster&&level>expandedCluster.level){expandedCluster=null;lastMarkerLayout=""}
-      const step=level>=9?.065:level>=8?.045:level>=7?.028:level>=6?.018:level>=5?.011:level>=4?.006:0;
+      const step=level>=9?.065:level>=8?.045:level>=7?.028:0;
       const groups=new Map();
       window.mapRestaurantById=new Map(mapFiltered.map(x=>[String(x.id),x]));
       mapFiltered.forEach(x=>{
@@ -473,7 +473,7 @@
           const button=document.createElement("button");button.type="button";button.className="map-cluster";button.textContent=String(group.length);
           button.setAttribute("aria-label",`이 근처 맛집 ${group.length}곳 보기`);
           const memberIds=new Set(group.map(item=>String(item.x.id)));
-          button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();kakao.maps.event.preventMap();expandedCluster={ids:memberIds,level:Math.min(3,Math.max(1,level-2))};lastMarkerLayout="";map.moveTo(position,expandedCluster.level);clearTimeout(markerRenderTimer);markerRenderTimer=setTimeout(()=>renderMarkers(false),180)});
+          button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();kakao.maps.event.preventMap();const expandedLevel=Math.min(6,Math.max(1,level-2));expandedCluster={ids:memberIds,level:expandedLevel};lastMarkerLayout="";map.moveTo(position,expandedLevel);clearTimeout(markerRenderTimer);markerRenderTimer=setTimeout(()=>renderMarkers(false),180)});
           markerOverlays.push(new kakao.maps.CustomOverlay({map,position,content:button,xAnchor:.5,yAnchor:.5,zIndex:20}));
           return;
         }
