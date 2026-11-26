@@ -18,7 +18,7 @@
     .brand{display:flex;align-items:center;gap:10px;text-decoration:none;white-space:nowrap}.brand-mark{width:42px;height:42px;display:grid;place-items:center;background:var(--brand);border-radius:14px;font-size:23px;box-shadow:0 7px 18px #ff4d2e35}.brand-name{font-size:19px;font-weight:950;letter-spacing:-.7px}
     .search{margin-left:auto;width:min(520px,48vw);position:relative}.search span{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px}.search input{width:100%;height:44px;border:1px solid #deddd9;border-radius:14px;background:#f8f8f7;padding:0 15px 0 40px;outline:none}.search input:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 3px #ff4d2e16}
     .top-count{font-size:12px;font-weight:800;color:var(--muted);white-space:nowrap}.top-count b{color:var(--brand)}
-    .layout{height:calc(100% - 68px);display:grid;grid-template-columns:470px 1fr}.feed{overflow:auto;padding:22px;border-right:1px solid var(--line);background:var(--canvas);scrollbar-width:thin}.map-wrap{position:relative;min-width:0;overflow:hidden}#map{position:absolute;inset:0;height:100%;width:100%;background:#ddd}
+    .layout{height:calc(100% - 68px);display:grid;grid-template-columns:470px 1fr}.feed{overflow:auto;padding:22px;border-right:1px solid var(--line);background:var(--canvas);scrollbar-width:thin}.map-wrap{position:relative;min-width:0;overflow:hidden}#map{position:absolute;inset:0;height:100%;width:100%;background:#ddd}html.native-kakao-map #map{background:transparent!important}
     .intro{background:linear-gradient(135deg,#fff1ec 0%,#fff 72%);border:1px solid #ffd9cf;border-radius:24px;padding:22px;position:relative;overflow:hidden}.intro:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;background:#ff4d2e0b;right:-55px;top:-60px;pointer-events:none}.eyebrow{color:var(--brand);font-size:12px;font-weight:950}.intro h1{font-size:27px;letter-spacing:-1.4px;line-height:1.18;margin:9px 0}.intro p{font-size:13px;color:var(--muted);line-height:1.55;margin:0}.intro-meta{display:flex;align-items:center;gap:8px;margin-top:15px;font-size:11px;font-weight:800;flex-wrap:wrap}.intro-meta span{background:#fff;border:1px solid #ffded5;border-radius:99px;padding:7px 9px}.content-policy{position:relative;z-index:1;margin-top:11px;padding:9px 10px;border-radius:10px;background:#fff8f5;color:#72574f;font-size:10px;font-weight:750;line-height:1.45}.stakeholder-links{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.stakeholder-links a{display:flex;align-items:center;justify-content:space-between;min-height:38px;padding:8px 10px;border:1px solid #ffd1c5;border-radius:11px;background:#fff;color:var(--brand-dark);font-size:10px;font-weight:900;text-decoration:none}.stakeholder-links a:hover{background:var(--soft)}
     .filter-groups{display:grid;gap:8px;padding:17px 0 12px}.filter-line{display:grid;grid-template-columns:52px minmax(0,1fr);align-items:center;gap:6px}.filter-label{color:#777a80;font-size:10px;font-weight:950}.filters{display:flex;gap:7px;overflow:auto;padding:1px;scrollbar-width:none}.filters::-webkit-scrollbar{display:none}.chip{border:1px solid #deddd9;background:#fff;color:#4d4f54;border-radius:99px;padding:9px 12px;font-size:12px;font-weight:850;white-space:nowrap}.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}.chip.reel-filter{border-color:#ffd1c5;color:var(--brand-dark)}.chip.reel-filter.on{background:var(--brand);border-color:var(--brand);color:#fff}
     .section-head{display:flex;align-items:center;gap:8px;margin:5px 0 11px}.section-head h2{font-size:18px;margin:0;letter-spacing:-.5px}.section-head>span{font-size:12px;color:var(--muted)}.sort-note{margin:-2px 0 11px;padding:9px 11px;border-radius:10px;background:var(--soft);color:var(--brand-dark);font-size:11px;font-weight:850}.chip.sort{border-color:#ffd1c5;color:var(--brand-dark)}.chip.sort.on{background:var(--brand);border-color:var(--brand);color:#fff}.chip:disabled{opacity:.55;cursor:wait}
@@ -171,7 +171,14 @@
       const minimumVisibleMs = 3000;
       const startedAt = performance.now();
       let appReady = false;
+      let contentReady = false;
+      let nativeMapReady = false;
       let dismissed = false;
+
+      function updateReady() {
+        appReady = contentReady && nativeMapReady;
+        finish();
+      }
 
       function finish() {
         if (!appReady || dismissed) return;
@@ -187,9 +194,11 @@
         else setTimeout(() => splash.remove(), 200);
       }
 
-      window.addEventListener("reelsmap:startup-ready", () => { appReady = true; finish(); }, { once: true });
+      window.addEventListener("reelsmap:startup-ready", () => { contentReady = true; updateReady(); }, { once: true });
+      window.addEventListener("reelsmap:native-map-ready", () => { nativeMapReady = true; updateReady(); }, { once: true });
+      window.addEventListener("reelsmap:native-map-error", () => { nativeMapReady = true; updateReady(); }, { once: true });
       // A broken network should not leave the launch screen stuck forever.
-      setTimeout(() => { appReady = true; finish(); }, 12000);
+      setTimeout(() => { contentReady = true; nativeMapReady = true; updateReady(); }, 12000);
     })();
   </script>
   <header class="topbar">
@@ -898,7 +907,7 @@
       const signalReady=()=>window.dispatchEvent(new Event("reelsmap:startup-ready"));
       if(mapReady&&window.ReelsNative?.enabled){
         map.relayout();
-        requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(()=>{map.relayout();signalReady()},250)));
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{map.relayout();signalReady()}));
       }else signalReady();
     });
     setInterval(()=>load(true),300000);
