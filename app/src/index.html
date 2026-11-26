@@ -167,15 +167,28 @@
       const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
       splash.classList.remove("hidden");
 
+      const minimumVisibleMs = 3000;
+      const startedAt = performance.now();
+      let appReady = false;
+      let dismissed = false;
+
       function finish() {
+        if (!appReady || dismissed) return;
+        const remaining = minimumVisibleMs - (performance.now() - startedAt);
+        if (remaining > 0) {
+          setTimeout(finish, remaining);
+          return;
+        }
         if (splash.classList.contains("is-leaving")) return;
+        dismissed = true;
         splash.classList.add("is-leaving");
         if (reducedMotion) splash.remove();
         else setTimeout(() => splash.remove(), 200);
       }
 
-      // Keep the branded launch screen visible for a full three seconds.
-      setTimeout(finish, 3000);
+      window.addEventListener("reelsmap:startup-ready", () => { appReady = true; finish(); }, { once: true });
+      // A broken network should not leave the launch screen stuck forever.
+      setTimeout(() => { appReady = true; finish(); }, 12000);
     })();
   </script>
   <header class="topbar">
@@ -881,7 +894,11 @@
     async function load(refresh=false){try{const r=await fetch(API+"?t="+Date.now());if(!r.ok)throw new Error(`HTTP ${r.status}`);const j=await r.json();if(!j.ok||!Array.isArray(j.restaurants))throw new Error("Invalid site data");restaurants=groupRestaurants(j.restaurants);dataReady=true;loadingError=false;updateDistances();applyFilters();if($("connectReelDialog").open)showPlaceMatches()}catch(error){console.error("Restaurant data load failed",error);if(!refresh&&!dataReady){loadingError=true;applyFilters()}}}
     window.addEventListener("resize",()=>{if(mapReady&&$("mapWrap").offsetWidth)map.relayout()});setView("map");initSocialAuth().then(()=>trackEngagement(null,"visit"));
     Promise.allSettled([loadKakaoMap(),load()]).then(()=>{
-      window.dispatchEvent(new Event("reelsmap:startup-ready"));
+      const signalReady=()=>window.dispatchEvent(new Event("reelsmap:startup-ready"));
+      if(mapReady&&window.ReelsNative?.enabled){
+        map.relayout();
+        requestAnimationFrame(()=>requestAnimationFrame(()=>setTimeout(()=>{map.relayout();signalReady()},250)));
+      }else signalReady();
     });
     setInterval(()=>load(true),300000);
   </script>
