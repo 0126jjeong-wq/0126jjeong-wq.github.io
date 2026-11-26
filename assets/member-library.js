@@ -1,5 +1,5 @@
 // Shared by the website and bundled iOS app. No guest or cross-account cache.
-export function createMemberLibrary(client) {
+export function createMemberLibrary(client, source = 'web') {\n  const savedVia = source === 'app' ? 'app' : 'web';
   let owner = null, version = 0;
   const context = () => { if (!owner) throw new Error('회원가입과 로그인이 필요해요.'); return owner; };
   return {
@@ -31,7 +31,7 @@ export function createMemberLibrary(client) {
       const id = context();
       // Inbox import must not erase an existing restaurant connection.
       const options = {onConflict:'user_id,url',ignoreDuplicates:place === undefined};
-      const { error } = await client.from('user_reel_library').upsert({user_id:id,url,...(place === undefined ? {} : {place})},options);
+      const { error } = await client.from('user_reel_library').upsert({user_id:id,url,saved_via:savedVia,...(place === undefined ? {} : {place})},options);
       if (error) throw error;
     },
     async updateReel(url, place) {
