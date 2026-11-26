@@ -591,13 +591,7 @@
       if(cat.includes("양식")||cat.includes("피자")||cat.includes("파스타")||cat.includes("버거")) return "양식";
       return "식사";
     }
-    let kakaoPlacesService=null;
-    function getKakaoPlaces(){
-      if(!kakaoPlacesService&&window.kakao?.maps?.services?.Places){
-        kakaoPlacesService=new window.kakao.maps.services.Places();
-      }
-      return kakaoPlacesService;
-    }
+    let kakaoSearchTimer=0,kakaoSearchSequence=0;
     function showPlaceMatches() {
       const q=$("placeMatchSearch").value.trim().toLowerCase(), target=$("placeMatchResults"); target.replaceChildren();
       const linked=personalLinks.find(entry=>entry.url===canonicalReel(connectingUrl));
@@ -618,38 +612,36 @@
         target.append(button);
       }
       if(q.length>=2){
-        const placesSvc=getKakaoPlaces();
-        if(placesSvc){
-          const searchedUrl=connectingUrl;
-          placesSvc.keywordSearch(q,(result,status)=>{
-            if(connectingUrl!==searchedUrl||$("placeMatchSearch").value.trim().toLowerCase()!==q||!$("connectReelDialog").open)return;
-            if(status===window.kakao.maps.services.Status.OK&&Array.isArray(result)&&result.length){
+        const sequence=++kakaoSearchSequence, searchedUrl=connectingUrl;
+        clearTimeout(kakaoSearchTimer);
+        if(!matches.length)target.textContent="카카오맵에서 장소를 찾고 있어요…";
+        kakaoSearchTimer=setTimeout(async()=>{
+          try{
+            const places=await window.ReelsPlaces.search(q);
+            if(sequence!==kakaoSearchSequence||connectingUrl!==searchedUrl||$("placeMatchSearch").value.trim().toLowerCase()!==q||!("connectReelDialog").open)return;
+            if(places.length){
               const header=document.createElement("p");
               header.className="place-match-heading";
-              header.textContent="카카오맵 검색 결과 · 맞는 맛집을 선택하면 저장돼요";
+              header.textContent="카카오맵 검색 결과 · 맞는 곳을 선택하면 이름과 주소가 자동 입력돼요";
               target.append(header);
-              for(const item of result.slice(0,6)){
+              for(const item of places.slice(0,8)){
                 const btn=document.createElement("button");
                 btn.type="button";
                 btn.className="auth-button";
                 btn.style.cssText="text-align:left;display:flex;flex-direction:column;gap:2px;padding:8px 12px;margin:4px 0;border-color:#ffb7a6";
-                btn.innerHTML=`<span style="font-weight:900;color:var(--ink)">${esc(item.place_name)}</span><span style="font-size:11px;color:#777">${esc(item.road_address_name||item.address_name)} · ${esc(item.category_group_name||item.category_name||"음식점")}</span>`;
-                btn.addEventListener("click",()=>storeConnection({
-                  id:"kakao-"+item.id,
-                  name:item.place_name,
-                  address:item.road_address_name||item.address_name||"서울",
-                  category:mapKakaoCategory(item.category_group_name||item.category_name),
-                  latitude:parseFloat(item.y),
-                  longitude:parseFloat(item.x)
-                }));
+                btn.innerHTML=`<span style="font-weight:900;color:var(--ink)">${esc(item.name)}</span><span style="font-size:11px;color:#777">${esc(item.address)} · ${esc(item.category_detail||item.category||"음식점")}</span>`;
+                btn.addEventListener("click",()=>storeConnection({id:"kakao-"+item.place_id,name:item.name,address:item.address,category:mapKakaoCategory(item.category),region:item.region||"서울",latitude:Number(item.latitude),longitude:Number(item.longitude)}));
                 target.append(btn);
               }
-            } else if(!matches.length){
-              target.textContent="검색 결과가 없어요. 아래에서 맛집을 직접 추가할 수 있어요.";
-            }
-          });
-        }
+            }else if(!matches.length)target.textContent="검색 결과가 없어요. 가게 이름이나 동네를 다시 검색해 주세요.";
+          }catch(error){
+            if(sequence!==kakaoSearchSequence||connectingUrl!==searchedUrl||!("connectReelDialog").open)return;
+            if(!matches.length)target.textContent="카카오 검색에 연결하지 못했어요. 잠시 뒤 다시 시도해 주세요.";
+            console.error("Kakao place search failed",error);
+          }
+        },450);
       } else if(!matches.length){
+        kakaoSearchSequence++;clearTimeout(kakaoSearchTimer);
         target.textContent="등록된 맛집 후보가 없어요. 이름을 두 글자 이상 입력하면 카카오맵에서 검색됩니다.";
       }
     }
