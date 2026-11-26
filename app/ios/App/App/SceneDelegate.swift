@@ -67,7 +67,8 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
     func updateKakaoMap(frame: CGRect, cutouts: [CGRect], places: [[String: Any]], hidden: Bool) {
         DispatchQueue.main.async {
             self.mapFrame = frame
-            self.mapCutouts = cutouts.map { $0.offsetBy(dx: -frame.minX, dy: -frame.minY) }
+            let nextCutouts = cutouts.map { $0.offsetBy(dx: -frame.minX, dy: -frame.minY) }
+            self.mapCutouts = nextCutouts
             self.pendingPlaces = places
             // Capacitor can report a temporary zero-sized/invalid rect while the
             // WebView is still laying out during launch. Do not create the native
@@ -81,9 +82,13 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
             }
             guard let container = self.kakaoMapContainer, let host = self.kakaoMapHostView else {
                 let host = KakaoMapPassthroughHostView(frame: frame)
+                host.translatesAutoresizingMaskIntoConstraints = true
+                host.isOpaque = false
                 host.backgroundColor = .clear
-                host.passthroughRects = self.mapCutouts
+                host.passthroughRects = nextCutouts
                 let container = KMViewContainer(frame: host.bounds)
+                container.translatesAutoresizingMaskIntoConstraints = true
+                container.isOpaque = false
                 container.backgroundColor = .clear
                 host.addSubview(container)
                 self.kakaoMapHostView = host
@@ -99,11 +104,12 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
                 self.startMapEngineIfReady()
                 return
             }
-            host.frame = frame
-            host.passthroughRects = self.mapCutouts
-            container.frame = host.bounds
+            if host.frame != frame {
+                host.frame = frame
+                if container.frame != host.bounds { container.frame = host.bounds }
+            }
+            if host.passthroughRects != nextCutouts { host.passthroughRects = nextCutouts }
             host.isHidden = false
-            self.view.bringSubviewToFront(host)
             self.refreshNativePlaces()
         }
     }
@@ -246,6 +252,7 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
         }
         map.viewRect = CGRect(origin: .zero, size: mapFrame.size)
         refreshNativePlaces()
+        bridge?.webView?.evaluateJavaScript("window.dispatchEvent(new Event('reelsmap:native-map-ready'))")
     }
 
     func addViewFailed(_ viewName: String, viewInfoName: String) {
