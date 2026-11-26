@@ -68,10 +68,22 @@ window.ReelsAuth = {
 };
 window.ReelsNative = {
   enabled: native,
-  async getPosition() {
+  async getPosition(onRefined) {
     const status = await Geolocation.checkPermissions();
-    if (status.location !== 'granted') await Geolocation.requestPermissions();
-    return Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+    if (status.location !== 'granted') {
+      const requested = await Geolocation.requestPermissions();
+      if (requested.location !== 'granted') throw new Error('위치 정보 권한이 거부되었습니다.');
+    }
+    let first;
+    try {
+      first = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
+    } catch {
+      return Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+    }
+    Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 0 })
+      .then(position => onRefined?.(position))
+      .catch(() => {});
+    return first;
   },
   async open(url) {
     const parsed = new URL(url);
