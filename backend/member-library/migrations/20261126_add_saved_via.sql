@@ -1,0 +1,1 @@
+alter table public.user_reel_library\n  add column if not exists saved_via text not null default 'unknown'\n  check (saved_via in ('app', 'web', 'unknown'));\n\ncomment on column public.user_reel_library.saved_via is\n  'Client-reported first-save origin: app or web; unknown for records created before origin tracking.';\n
