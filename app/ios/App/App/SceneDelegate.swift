@@ -62,7 +62,7 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
         bridge?.registerPluginInstance(KakaoNativeMapPlugin())
     }
 
-    func updateKakaoMap(frame: CGRect, cutouts: [CGRect], places: [[String: Any]]) {
+    func updateKakaoMap(frame: CGRect, cutouts: [CGRect], places: [[String: Any]], hidden: Bool) {
         DispatchQueue.main.async {
             self.mapFrame = frame
             self.mapCutouts = cutouts.map { $0.offsetBy(dx: -frame.minX, dy: -frame.minY) }
@@ -70,6 +70,7 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
             guard let container = self.kakaoMapContainer, let host = self.kakaoMapHostView else {
                 let host = KakaoMapPassthroughHostView(frame: frame)
                 host.backgroundColor = .clear
+                host.isHidden = hidden || frame.isEmpty
                 host.passthroughRects = self.mapCutouts
                 let container = KMViewContainer(frame: host.bounds)
                 container.backgroundColor = .clear
@@ -89,8 +90,8 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
             host.frame = frame
             host.passthroughRects = self.mapCutouts
             container.frame = host.bounds
-            host.isHidden = frame.isEmpty
-            if !frame.isEmpty { self.view.bringSubviewToFront(host) }
+            host.isHidden = hidden || frame.isEmpty
+            if !hidden && !frame.isEmpty { self.view.bringSubviewToFront(host) }
             self.refreshNativePlaces()
         }
     }
@@ -148,7 +149,7 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
                 option.rank = 10
                 if let poi = layer.addPoi(option: option, at: MapPoint(longitude: lng, latitude: lat)) {
                     poi.show()
-                    visiblePlaceIDs[poiID] = id
+                    visiblePlaceIDs[poiID] = String(describing: place["overlayID"] ?? id)
                 }
                 continue
             }
@@ -169,7 +170,7 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
                 guard let poi = layer.addPoi(option: option, at: MapPoint(longitude: lng, latitude: lat)) else { continue }
                 poi.userObject = id as NSString
                 poi.show()
-                visiblePlaceIDs[poiID] = id
+                visiblePlaceIDs[poiID] = String(describing: place["overlayID"] ?? id)
                 continue
             }
             let category = String(describing: place["category"] ?? "식사")
@@ -188,7 +189,7 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
             guard let poi = layer.addPoi(option: option, at: MapPoint(longitude: lng, latitude: lat)) else { continue }
             poi.userObject = id as NSString
             poi.show()
-            visiblePlaceIDs[poiID] = id
+            visiblePlaceIDs[poiID] = String(describing: place["overlayID"] ?? id)
         }
     }
 
@@ -345,7 +346,7 @@ final class KakaoNativeMapPlugin: CAPPlugin, CAPBridgedPlugin {
             return webView.convert(CGRect(x: x, y: y, width: width, height: height), to: controller.view)
         }
         let places = call.getArray("places", [String: Any].self) ?? []
-        controller.updateKakaoMap(frame: frame, cutouts: nativeCutouts, places: places)
+        controller.updateKakaoMap(frame: frame, cutouts: nativeCutouts, places: places, hidden: call.getBool("hidden") ?? false)
         call.resolve()
     }
 
