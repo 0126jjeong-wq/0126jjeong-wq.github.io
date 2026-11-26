@@ -631,7 +631,7 @@
                 btn.className="auth-button";
                 btn.style.cssText="text-align:left;display:flex;flex-direction:column;gap:2px;padding:8px 12px;margin:4px 0;border-color:#ffb7a6";
                 btn.innerHTML=`<span style="font-weight:900;color:var(--ink)">${esc(item.name)}</span><span style="font-size:11px;color:#777">${esc(item.address)} · ${esc(item.category_detail||item.category||"음식점")}</span>`;
-                btn.addEventListener("click",()=>storeConnection({id:"kakao-"+item.place_id,name:item.name,address:item.address,category:mapKakaoCategory(item.category),region:item.region||"서울",latitude:Number(item.latitude),longitude:Number(item.longitude)}));
+                btn.addEventListener("click",()=>storeConnection({id:"kakao-"+item.place_id,name:item.name,address:item.address,category:mapKakaoCategory(item.category),region:item.region||"",latitude:Number(item.latitude),longitude:Number(item.longitude)}));
                 target.append(btn);
               }
             }else if(!matches.length)target.textContent="검색 결과가 없어요. 가게 이름이나 동네를 다시 검색해 주세요.";
