@@ -76,13 +76,13 @@
     .nav-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:50px;border-radius:13px;font-size:11px;font-weight:850}
     .nav-btn i{display:grid;place-items:center;width:40px;height:25px;border-radius:9px;line-height:1}
     .nav-btn.on i{background:var(--soft)}
-    .map-toolbar{position:absolute;z-index:800;top:12px;left:12px;right:12px;max-width:560px;display:grid;gap:6px;pointer-events:none}
-    .map-toolbar .map-card,.map-toolbar .map-category-filter{position:static;pointer-events:auto}
+    .map-toolbar{position:absolute;z-index:800;top:12px;left:12px;right:12px;max-width:560px;display:grid;gap:6px;pointer-events:none;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;filter:none!important}
+    .map-toolbar .map-card,.map-toolbar .map-category-filter{position:static;pointer-events:auto;box-shadow:0 3px 14px #11111112}
     .map-toolbar .map-card{display:flex;align-items:center;gap:4px 10px;padding:8px 10px}
     .map-card b{margin:0}.map-card span{margin-right:auto}
     .map-toolbar .map-category-filter{padding:5px;margin:0}
     .map-wrap:has(.place-sheet:not(.hidden)) .map-tools{bottom:min(61%,440px)}
-    .map-tools{z-index:820;right:12px;bottom:16px;gap:8px}
+    .map-tools{z-index:820;right:12px;bottom:16px;gap:8px;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;filter:none!important;outline:0!important}
     .map-tool{width:48px;min-width:48px;height:48px;padding:0 3px;border-radius:50%;font-size:9px;line-height:1.05}
     .place-sheet{z-index:810;left:12px;right:12px;bottom:12px;max-height:min(56%,440px);padding:14px}
     .map-error{z-index:820}
