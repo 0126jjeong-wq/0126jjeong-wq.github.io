@@ -618,7 +618,7 @@
         kakaoSearchTimer=setTimeout(async()=>{
           try{
             const places=await window.ReelsPlaces.search(q);
-            if(sequence!==kakaoSearchSequence||connectingUrl!==searchedUrl||$("placeMatchSearch").value.trim().toLowerCase()!==q||!("connectReelDialog").open)return;
+            if(sequence!==kakaoSearchSequence||connectingUrl!==searchedUrl||$("placeMatchSearch").value.trim().toLowerCase()!==q||!$("connectReelDialog").open)return;
             if(places.length){
               const header=document.createElement("p");
               header.className="place-match-heading";
@@ -635,7 +635,7 @@
               }
             }else if(!matches.length)target.textContent="검색 결과가 없어요. 가게 이름이나 동네를 다시 검색해 주세요.";
           }catch(error){
-            if(sequence!==kakaoSearchSequence||connectingUrl!==searchedUrl||!("connectReelDialog").open)return;
+            if(sequence!==kakaoSearchSequence||connectingUrl!==searchedUrl||!$("connectReelDialog").open)return;
             if(!matches.length)target.textContent="카카오 검색에 연결하지 못했어요. 잠시 뒤 다시 시도해 주세요.";
             console.error("Kakao place search failed",error);
           }
