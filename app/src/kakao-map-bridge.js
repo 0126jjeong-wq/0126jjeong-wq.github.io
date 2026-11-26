@@ -43,6 +43,11 @@
         window.addEventListener("reelsmap:native-marker-tap", this.onMarkerTap);
         window.addEventListener("reelsmap:native-map-tap", this.onMapTap);
         window.addEventListener("reelsmap:native-zoom", this.onNativeZoom);
+        this.onDialogChange = () => this.scheduleSync();
+        document.addEventListener("close", this.onDialogChange, true);
+        document.addEventListener("cancel", this.onDialogChange, true);
+        this.dialogObserver = new MutationObserver(this.onDialogChange);
+        this.dialogObserver.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["open"] });
         this.resizeObserver = new ResizeObserver(() => this.scheduleSync());
         this.resizeObserver.observe(element);
         this.onViewportChange = () => this.scheduleSync();
@@ -85,6 +90,7 @@
         if (!picker && pickerDialog?.open) return;
         activeNativeMap = this;
         const rect = this.element.getBoundingClientRect();
+        const modalOpen = Boolean(document.querySelector("dialog[open]"));
         const cutouts = [...document.querySelectorAll(".map-card, #mapCategoryFilter, .map-tools, #placeSheet, #mapError, #connectReelDialog")]
           .map(control => control.getBoundingClientRect())
           .filter(control => control.width > 0 && control.height > 0 && control.right > rect.left && control.left < rect.right && control.bottom > rect.top && control.top < rect.bottom)
@@ -98,9 +104,9 @@
           const placeId = overlay.content?.dataset?.placeId || id;
           const restaurant = isLocation ? null : window.mapRestaurantById?.get(String(placeId));
           const bestViews = Math.max(0, ...(restaurant?.reels || []).map(reel => Number(reel.signal?.view_count) || 0));
-          places.push({ id: placeId, label: isLocation ? "내 위치" : label.replace(/ · .* 지도 마커$/, ""), location: isLocation, category: restaurant?.category || "식사", views: bestViews, cluster: isCluster, count: isCluster ? Number(overlay.content.textContent) || 0 : 0, details: this.level <= 6, lat: overlay.position.lat, lng: overlay.position.lng });
+          places.push({ id: placeId, overlayID: String(id), label: isLocation ? "내 위치" : label.replace(/ · .* 지도 마커$/, ""), location: isLocation, category: restaurant?.category || "식사", views: bestViews, cluster: isCluster, count: isCluster ? Number(overlay.content.textContent) || 0 : 0, details: this.level <= 6, lat: overlay.position.lat, lng: overlay.position.lng });
         }
-        this.call("update", { rect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height }, cutouts, places });
+        this.call("update", { rect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height }, cutouts, places, hidden: modalOpen });
       }
     }
     class NativeOverlay {
