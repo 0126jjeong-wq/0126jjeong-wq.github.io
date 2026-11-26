@@ -14,6 +14,35 @@
                     <view key="view" contentMode="scaleToFill" id="snD-IY-ifK">
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask"/>
+                        <subviews>
+                            <imageView clipsSubviews="YES" contentMode="scaleAspectFit" image="ReelsMapLaunchMark" translatesAutoresizingMaskIntoConstraints="NO" id="RLM-mark">
+                                <rect key="frame" x="143.5" y="245.0" width="88" height="88"/>
+                                <constraints>
+                                    <constraint firstAttribute="width" constant="88" id="RLM-mark-width"/>
+                                    <constraint firstAttribute="height" constant="88" id="RLM-mark-height"/>
+                                </constraints>
+                            </imageView>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="마이릴스맵" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="RLM-title">
+                                <rect key="frame" x="80" y="354" width="215" height="38"/>
+                                <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="30"/>
+                                <color key="textColor" red="0.12" green="0.12" blue="0.14" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                            <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="릴스로 찾는 맛집" textAlignment="center" translatesAutoresizingMaskIntoConstraints="NO" id="RLM-subtitle">
+                                <rect key="frame" x="93" y="398" width="190" height="24"/>
+                                <fontDescription key="fontDescription" type="system" weight="bold" pointSize="18"/>
+                                <color key="textColor" red="0.48" green="0.48" blue="0.50" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <nil key="highlightedColor"/>
+                            </label>
+                        </subviews>
+                        <constraints>
+                            <constraint firstItem="RLM-mark" firstAttribute="centerX" secondItem="snD-IY-ifK" secondAttribute="centerX" id="RLM-mark-center-x"/>
+                            <constraint firstItem="RLM-mark" firstAttribute="centerY" secondItem="snD-IY-ifK" secondAttribute="centerY" constant="-39" id="RLM-mark-center-y"/>
+                            <constraint firstItem="RLM-title" firstAttribute="centerX" secondItem="snD-IY-ifK" secondAttribute="centerX" id="RLM-title-center-x"/>
+                            <constraint firstItem="RLM-title" firstAttribute="top" secondItem="RLM-mark" secondAttribute="bottom" constant="18" id="RLM-title-top"/>
+                            <constraint firstItem="RLM-subtitle" firstAttribute="centerX" secondItem="snD-IY-ifK" secondAttribute="centerX" id="RLM-subtitle-center-x"/>
+                            <constraint firstItem="RLM-subtitle" firstAttribute="top" secondItem="RLM-title" secondAttribute="bottom" constant="4" id="RLM-subtitle-top"/>
+                        </constraints>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                     </view>
                 </viewController>
