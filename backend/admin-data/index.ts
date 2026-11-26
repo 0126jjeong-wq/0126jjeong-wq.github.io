@@ -119,6 +119,29 @@ Deno.serve(async(req:Request)=>{
   try{
     if(req.method==="GET"){
       const params=new URL(req.url).searchParams;
+      if(params.get("member_saves")==="1"){
+        const allRows:any[]=[];
+        for(let offset=0;;offset+=1000){
+          const {data,error}=await admin.from("user_reel_library").select("user_id,url,place,created_at").order("created_at",{ascending:false}).range(offset,offset+999);
+          if(error)throw error;
+          const batch=data||[];allRows.push(...batch);if(batch.length<1000)break;
+          if(offset>=100000)throw new Error("회원 저장 데이터가 너무 많아 한 번에 불러올 수 없습니다.");
+        }
+        const shortcode=(value:unknown)=>{const match=text(value,1200).match(/instagram\.com\/(?:reel|reels|p)\/([A-Za-z0-9_-]+)/i);return match?.[1]||""};
+        const groups=new Map<string,any>();
+        for(const row of allRows){const code=shortcode(row.url);if(!code)continue;let item=groups.get(code);if(!item){item={url:row.url,place:row.place||null,userIds:new Set<string>(),savedCount:0,lastSavedAt:row.created_at||null};groups.set(code,item)}item.userIds.add(String(row.user_id));item.savedCount=item.userIds.size;if(!item.place&&row.place)item.place=row.place;if(row.created_at&&(!item.lastSavedAt||row.created_at>item.lastSavedAt))item.lastSavedAt=row.created_at;}
+        const urls=[...groups.values()].map(item=>item.url), placeIds=[...new Set([...groups.values()].map(item=>String(item.place?.id||"")).filter(Boolean))], inboxRows:any[]=[], restaurantRows:any[]=[], placeRestaurantRows:any[]=[], signalRows:any[]=[];
+        for(let offset=0;offset<urls.length;offset+=100){const chunk=urls.slice(offset,offset+100);const [i,r,g]=await Promise.all([
+          admin.from("instagram_inbox").select("source_url,creator_handle,view_count,restaurant_name,submitted_name").in("source_url",chunk),
+          admin.from("restaurants").select("instagram_url,name,creator_handle,inbox_id").in("instagram_url",chunk),
+          admin.from("reel_media_categories").select("permalink,creator_handle,view_count").in("permalink",chunk)
+        ]);if(i.error||r.error||g.error)throw i.error||r.error||g.error;inboxRows.push(...(i.data||[]));restaurantRows.push(...(r.data||[]));signalRows.push(...(g.data||[]));}
+        for(let offset=0;offset<placeIds.length;offset+=100){const {data,error}=await admin.from("restaurants").select("id,name,creator_handle").in("id",placeIds.slice(offset,offset+100));if(error)throw error;placeRestaurantRows.push(...(data||[]));}
+        const byCode=(rows:any[],field:string)=>{const result=new Map<string,any>();for(const row of rows){const key=shortcode(row[field]);if(key)result.set(key,row)}return result};
+        const inboxByCode=byCode(inboxRows,"source_url"),restaurantByCode=byCode(restaurantRows,"instagram_url"),signalByCode=byCode(signalRows,"permalink"),placeRestaurantById=new Map(placeRestaurantRows.map(row=>[String(row.id),row]));
+        const memberSaves=[...groups.entries()].map(([code,item])=>{const inboxItem=inboxByCode.get(code),restaurant=restaurantByCode.get(code)||placeRestaurantById.get(String(item.place?.id||"")),signal=signalByCode.get(code),views=[signal?.view_count,inboxItem?.view_count].filter(value=>value!==null&&value!==undefined&&value!=="").map(Number).filter(value=>Number.isSafeInteger(value)&&value>=0);return{url:item.url,restaurant_name:restaurant?.name||inboxItem?.restaurant_name||inboxItem?.submitted_name||item.place?.name||"매장 연결 필요",creator_handle:restaurant?.creator_handle||signal?.creator_handle||inboxItem?.creator_handle||null,view_count:views.length?Math.max(...views):null,saved_count:item.savedCount,last_saved_at:item.lastSavedAt,has_place:Boolean(restaurant||inboxItem||item.place)}}).sort((a,b)=>b.saved_count-a.saved_count||String(b.last_saved_at||"").localeCompare(String(a.last_saved_at||"")));
+        return json({ok:true,member_saves:memberSaves,total:memberSaves.length});
+      }
       const memberVisits=params.get("member_visits");
       if(memberVisits!==null){
         const from=params.get("from"),to=params.get("to");
