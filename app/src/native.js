@@ -69,7 +69,8 @@ window.ReelsAuth = {
 };
 window.ReelsPlaces = {
   async search(query) {
-    const { data, error } = await client.functions.invoke('capture-place-search', { body: { queries: [query] } });
+    const queries=Array.isArray(query)?query:[query];
+    const { data, error } = await client.functions.invoke('capture-place-search', { body: { queries } });
     if (error) throw error;
     return Array.isArray(data?.candidates) ? data.candidates : [];
   }
