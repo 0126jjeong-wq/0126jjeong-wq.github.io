@@ -121,7 +121,14 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
               let controller = kakaoMapController,
               !controller.isEngineActive else { return }
         mapEngineActivationRequested = true
-        controller.activateEngine()
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            guard self.viewIfLoaded?.window != nil else {
+                self.mapEngineActivationRequested = false
+                return
+            }
+            controller.activateEngine()
+        }
     }
 
     func moveMap(latitude: Double, longitude: Double, webLevel: Int?) {
