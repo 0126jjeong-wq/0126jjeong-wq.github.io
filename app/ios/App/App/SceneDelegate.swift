@@ -48,6 +48,8 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
     private var kakaoMapContainer: KMViewContainer?
     private var kakaoMapHostView: KakaoMapPassthroughHostView?
     private var kakaoMapController: KMController?
+    private var mapEnginePrepared = false
+    private var mapEngineActivationRequested = false
     private var pendingPlaces: [[String: Any]] = []
     private var pendingCenter = CLLocationCoordinate2D(latitude: 37.5665, longitude: 126.978)
     private var pendingZoom = 13
@@ -67,10 +69,19 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
             self.mapFrame = frame
             self.mapCutouts = cutouts.map { $0.offsetBy(dx: -frame.minX, dy: -frame.minY) }
             self.pendingPlaces = places
+            // Capacitor can report a temporary zero-sized/invalid rect while the
+            // WebView is still laying out during launch. Do not create the native
+            // Kakao view or start its engine until the map has a real visible size.
+            guard !hidden,
+                  frame.minX.isFinite, frame.minY.isFinite,
+                  frame.width.isFinite, frame.height.isFinite,
+                  frame.width > 1, frame.height > 1 else {
+                self.kakaoMapHostView?.isHidden = true
+                return
+            }
             guard let container = self.kakaoMapContainer, let host = self.kakaoMapHostView else {
                 let host = KakaoMapPassthroughHostView(frame: frame)
                 host.backgroundColor = .clear
-                host.isHidden = hidden || frame.isEmpty
                 host.passthroughRects = self.mapCutouts
                 let container = KMViewContainer(frame: host.bounds)
                 container.backgroundColor = .clear
@@ -82,18 +93,29 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
                 self.kakaoMapController = controller
                 controller.delegate = self
                 controller.prepareEngine()
-                // The native map host is created after the Capacitor view has appeared,
-                // so viewWillAppear may already have run before the engine existed.
-                controller.activateEngine()
+                self.mapEnginePrepared = true
+                // Starting the SDK while the Capacitor/WebKit hierarchy is still
+                // laying out can abort inside UIKit. Start after the view is attached.
+                self.startMapEngineIfReady()
                 return
             }
             host.frame = frame
             host.passthroughRects = self.mapCutouts
             container.frame = host.bounds
-            host.isHidden = hidden || frame.isEmpty
-            if !hidden && !frame.isEmpty { self.view.bringSubviewToFront(host) }
+            host.isHidden = false
+            self.view.bringSubviewToFront(host)
             self.refreshNativePlaces()
         }
+    }
+
+    private func startMapEngineIfReady() {
+        guard mapEnginePrepared,
+              !mapEngineActivationRequested,
+              viewIfLoaded?.window != nil,
+              let controller = kakaoMapController,
+              !controller.isEngineActive else { return }
+        mapEngineActivationRequested = true
+        controller.activateEngine()
     }
 
     func moveMap(latitude: Double, longitude: Double, webLevel: Int?) {
@@ -254,12 +276,18 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        if kakaoMapController?.isEngineActive == false { kakaoMapController?.activateEngine() }
+        startMapEngineIfReady()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        startMapEngineIfReady()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         kakaoMapController?.pauseEngine()
+        mapEngineActivationRequested = false
     }
 
     private static func shortCount(_ value: Int) -> String {
