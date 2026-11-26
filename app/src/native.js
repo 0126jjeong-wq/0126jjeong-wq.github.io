@@ -12,6 +12,7 @@ import * as ReelsLinks from './shared-reels.js';
 window.ReelsLinks = ReelsLinks;
 
 const native = Capacitor.isNativePlatform();
+if (native) document.documentElement.classList.add('native-kakao-map');
 const KakaoNativeMap = registerPlugin('KakaoNativeMap');
 window.KakaoNativeMap = KakaoNativeMap;
 const redirectTo = 'com.myreelsmap.app://auth/callback';
