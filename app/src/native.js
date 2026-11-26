@@ -70,20 +70,15 @@ window.ReelsNative = {
   enabled: native,
   async getPosition(onRefined) {
     const status = await Geolocation.checkPermissions();
-    if (status.location !== 'granted') {
-      const requested = await Geolocation.requestPermissions();
-      if (requested.location !== 'granted') throw new Error('위치 정보 권한이 거부되었습니다.');
-    }
-    let first;
+    if (status.location !== 'granted') await Geolocation.requestPermissions();
     try {
-      first = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
+      const quick = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 });
+      Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 0 })
+        .then(position => onRefined?.(position)).catch(() => {});
+      return quick;
     } catch {
       return Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
     }
-    Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 12000, maximumAge: 0 })
-      .then(position => onRefined?.(position))
-      .catch(() => {});
-    return first;
   },
   async open(url) {
     const parsed = new URL(url);
