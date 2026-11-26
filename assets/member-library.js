@@ -1,5 +1,6 @@
 // Shared by the website and bundled iOS app. No guest or cross-account cache.
-export function createMemberLibrary(client, source = 'web') {\n  const savedVia = source === 'app' ? 'app' : 'web';
+export function createMemberLibrary(client, source = 'web') {
+  const savedVia = source === 'app' ? 'app' : 'web';
   let owner = null, version = 0;
   const context = () => { if (!owner) throw new Error('회원가입과 로그인이 필요해요.'); return owner; };
   return {
