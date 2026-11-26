@@ -197,8 +197,13 @@
       window.addEventListener("reelsmap:startup-ready", () => { contentReady = true; updateReady(); }, { once: true });
       window.addEventListener("reelsmap:native-map-ready", () => { nativeMapReady = true; updateReady(); }, { once: true });
       window.addEventListener("reelsmap:native-map-error", () => { nativeMapReady = true; updateReady(); }, { once: true });
-      // A broken network should not leave the launch screen stuck forever.
-      setTimeout(() => { contentReady = true; nativeMapReady = true; updateReady(); }, 12000);
+      // If the native map never reports ready, show the map error instead of a blank screen.
+      setTimeout(() => {
+        if (!nativeMapReady) window.dispatchEvent(new Event("reelsmap:kakao-tiles-error"));
+        contentReady = true;
+        nativeMapReady = true;
+        updateReady();
+      }, 12000);
     })();
   </script>
   <header class="topbar">
