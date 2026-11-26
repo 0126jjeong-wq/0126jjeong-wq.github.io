@@ -95,9 +95,10 @@
           if (!label) continue;
           const isLocation = label === "내 위치";
           const isCluster = overlay.content?.classList?.contains("map-cluster") || false;
-          const restaurant = window.mapRestaurantById?.get(String(id));
+          const placeId = overlay.content?.dataset?.placeId || id;
+          const restaurant = isLocation ? null : window.mapRestaurantById?.get(String(placeId));
           const bestViews = Math.max(0, ...(restaurant?.reels || []).map(reel => Number(reel.signal?.view_count) || 0));
-          places.push({ id, label: isLocation ? "내 위치" : label.replace(/ · .* 지도 마커$/, ""), location: isLocation, category: restaurant?.category || "식사", views: bestViews, cluster: isCluster, count: isCluster ? Number(overlay.content.textContent) || 0 : 0, details: this.level <= 3, lat: overlay.position.lat, lng: overlay.position.lng });
+          places.push({ id: placeId, label: isLocation ? "내 위치" : label.replace(/ · .* 지도 마커$/, ""), location: isLocation, category: restaurant?.category || "식사", views: bestViews, cluster: isCluster, count: isCluster ? Number(overlay.content.textContent) || 0 : 0, details: this.level <= 6, lat: overlay.position.lat, lng: overlay.position.lng });
         }
         this.call("update", { rect: { x: rect.left, y: rect.top, width: rect.width, height: rect.height }, cutouts, places });
       }
