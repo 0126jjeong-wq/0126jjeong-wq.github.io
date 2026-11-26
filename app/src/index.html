@@ -726,7 +726,7 @@
     }
     window.addEventListener("reelsmap:shared-reels",()=>{if(memberLibrary.owner)reloadLibrary().catch(()=>toast("보관함을 새로 불러오지 못했어요"));});
     const authClient=window.ReelsAuth.client;
-    const memberLibrary=window.createMemberLibrary(authClient);
+    const memberLibrary=window.createMemberLibrary(authClient,'app');
     let libraryBusy=false,memberSession=null,pendingMemberAction=null;
     function requireMember(action){
       if(memberLibrary.owner&&currentProfile)return true;
