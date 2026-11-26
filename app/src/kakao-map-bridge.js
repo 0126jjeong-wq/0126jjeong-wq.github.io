@@ -104,7 +104,7 @@
         const cutouts = [...document.querySelectorAll(".map-card, #mapCategoryFilter, .map-tools .map-tool, #placeSheet, #mapError, #connectReelDialog")]
           .map(control => control.getBoundingClientRect())
           .filter(control => control.width > 0 && control.height > 0 && control.right > rect.left && control.left < rect.right && control.bottom > rect.top && control.top < rect.bottom)
-          .map(control => ({ x: control.left, y: control.top, width: control.width, height: control.height }));
+          .map(control => ({ x: control.left - 4, y: control.top - 4, width: control.width + 8, height: control.height + 8 }));
         const places = [];
         for (const [id, overlay] of this.overlays) {
           const label = overlay.content?.getAttribute?.("aria-label") || overlay.content?.title || "";
