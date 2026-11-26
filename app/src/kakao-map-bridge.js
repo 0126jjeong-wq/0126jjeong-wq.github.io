@@ -48,11 +48,17 @@
         document.addEventListener("cancel", this.onDialogChange, true);
         this.dialogObserver = new MutationObserver(this.onDialogChange);
         this.dialogObserver.observe(document.body, { subtree: true, attributes: true, attributeFilter: ["open"] });
-        this.resizeObserver = new ResizeObserver(() => this.scheduleSync());
+        this.resizeObserver = new ResizeObserver(() => this.scheduleSettledSync());
         this.resizeObserver.observe(element);
-        this.onViewportChange = () => this.scheduleSync();
+        this.onViewportChange = () => this.scheduleSettledSync();
         window.addEventListener("resize", this.onViewportChange, { passive: true });
         window.addEventListener("scroll", this.onViewportChange, { passive: true, capture: true });
+        window.visualViewport?.addEventListener("resize", this.onViewportChange, { passive: true });
+        window.visualViewport?.addEventListener("scroll", this.onViewportChange, { passive: true });
+        this.viewObserver = new MutationObserver(() => this.scheduleSettledSync());
+        this.viewObserver.observe(document.body, { attributes: true, attributeFilter: ["data-view"] });
+        window.addEventListener("pageshow", this.onViewportChange);
+        this.scheduleSettledSync();
         this.setCenter(options.center || new LatLng(37.5665, 126.978));
         this.scheduleSync();
       }
@@ -82,6 +88,10 @@
         clearTimeout(this.syncTimer);
         this.syncTimer = setTimeout(() => this.sync(), 70);
       }
+      scheduleSettledSync() {
+        this.scheduleSync();
+        [180, 520, 1050].forEach(delay => setTimeout(() => this.sync(), delay));
+      }
       sync() {
         if (!this.element.isConnected) return;
         const picker = this.element.id === "privatePlaceMap";
@@ -91,7 +101,7 @@
         activeNativeMap = this;
         const rect = this.element.getBoundingClientRect();
         const modalOpen = Boolean(document.querySelector("dialog[open]"));
-        const cutouts = [...document.querySelectorAll(".map-card, #mapCategoryFilter, .map-tools, #placeSheet, #mapError, #connectReelDialog")]
+        const cutouts = [...document.querySelectorAll(".map-card, #mapCategoryFilter, .map-tools .map-tool, #placeSheet, #mapError, #connectReelDialog")]
           .map(control => control.getBoundingClientRect())
           .filter(control => control.width > 0 && control.height > 0 && control.right > rect.left && control.left < rect.right && control.bottom > rect.top && control.top < rect.bottom)
           .map(control => ({ x: control.left, y: control.top, width: control.width, height: control.height }));
