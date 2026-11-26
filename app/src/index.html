@@ -622,7 +622,7 @@
       if(q.length>=2){
         const sequence=searchSequence, searchedUrl=connectingUrl;
         if(!matches.length)target.textContent="카카오맵에서 장소를 찾고 있어요…";
-        const searchTerms=[...new Set([q,q.replace(/\\s*점$/,""),q.split(/\\s+/).slice(0,-1).join(" "),q.split(/\\s+/)[0]].map(value=>value.trim()).filter(value=>value.length>=2))].slice(0,3);
+        const searchTerms=[...new Set([q,q.replace(/\s*점$/,""),q.split(/\s+/).slice(0,-1).join(" "),q.split(/\s+/)[0]].map(value=>value.trim()).filter(value=>value.length>=2))].slice(0,3);
         kakaoSearchTimer=setTimeout(async()=>{
           try{
             const places=await window.ReelsPlaces.search(searchTerms);
