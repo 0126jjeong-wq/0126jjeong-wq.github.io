@@ -23,6 +23,45 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 }
 
+private final class ReelsMapLaunchMark: UIView {
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = UIColor(red: 1, green: 0.30, blue: 0.18, alpha: 1)
+        layer.cornerRadius = 25
+        clipsToBounds = true
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+
+    override func draw(_ rect: CGRect) {
+        guard let context = UIGraphicsGetCurrentContext() else { return }
+        let scale = min(rect.width, rect.height) / 88
+        context.saveGState()
+        context.translateBy(x: (rect.width - 88 * scale) / 2, y: (rect.height - 88 * scale) / 2)
+        context.scaleBy(x: scale, y: scale)
+        let pin = UIBezierPath()
+        pin.move(to: CGPoint(x: 44, y: 10))
+        pin.addCurve(to: CGPoint(x: 44, y: 77), controlPoint1: CGPoint(x: 15, y: 10), controlPoint2: CGPoint(x: 14, y: 44))
+        pin.addCurve(to: CGPoint(x: 44, y: 10), controlPoint1: CGPoint(x: 74, y: 44), controlPoint2: CGPoint(x: 73, y: 10))
+        UIColor.white.setFill()
+        pin.fill()
+        UIColor(red: 1, green: 0.30, blue: 0.18, alpha: 1).setFill()
+        UIBezierPath(ovalIn: CGRect(x: 31, y: 25, width: 26, height: 26)).fill()
+        let play = UIBezierPath()
+        play.move(to: CGPoint(x: 40, y: 31))
+        play.addLine(to: CGPoint(x: 40, y: 45))
+        play.addQuadCurve(to: CGPoint(x: 43, y: 45), controlPoint: CGPoint(x: 41, y: 46))
+        play.addLine(to: CGPoint(x: 53, y: 39))
+        play.addQuadCurve(to: CGPoint(x: 53, y: 37), controlPoint: CGPoint(x: 54, y: 38))
+        play.addLine(to: CGPoint(x: 43, y: 31))
+        play.addQuadCurve(to: CGPoint(x: 40, y: 31), controlPoint: CGPoint(x: 41, y: 30))
+        play.close()
+        UIColor.white.setFill()
+        play.fill()
+        context.restoreGState()
+    }
+}
+
 private final class KakaoMapPassthroughHostView: UIView {
     var passthroughRects: [CGRect] = [] {
         didSet { updateMask() }
@@ -34,8 +73,25 @@ private final class KakaoMapPassthroughHostView: UIView {
     }
 
     private func updateMask() {
+        // Even-odd masks cancel overlapping holes. The JS controls include
+        // padding, so merge intersecting rectangles before cutting them out.
+        var merged: [CGRect] = []
+        for rect in passthroughRects.map({ $0.intersection(bounds) }).filter({ !$0.isNull && !$0.isEmpty }) {
+            var combined = rect
+            var changed = true
+            while changed {
+                changed = false
+                if let index = merged.firstIndex(where: {
+                    $0.insetBy(dx: -1, dy: -1).intersects(combined.insetBy(dx: -1, dy: -1))
+                }) {
+                    combined = combined.union(merged.remove(at: index))
+                    changed = true
+                }
+            }
+            merged.append(combined)
+        }
         let path = UIBezierPath(rect: bounds)
-        passthroughRects.forEach { path.append(UIBezierPath(rect: $0)) }
+        merged.forEach { path.append(UIBezierPath(rect: $0)) }
         let mask = CAShapeLayer()
         mask.frame = bounds
         mask.path = path.cgPath
@@ -58,6 +114,8 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
     private var visiblePlaceIDs: [String: String] = [:]
     private var registeredClusterStyleIDs = Set<String>()
     private var lastRenderedPlacesSignature: String?
+    private var launchSplashView: UIView?
+    private var launchSplashShown = false
 
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(SharedReelsPlugin())
@@ -94,6 +152,7 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
                 self.kakaoMapHostView = host
                 self.kakaoMapContainer = container
                 self.view.addSubview(host)
+                if let splash = self.launchSplashView { self.view.bringSubviewToFront(splash) }
                 let controller = KMController(viewContainer: container)
                 self.kakaoMapController = controller
                 controller.delegate = self
@@ -296,6 +355,55 @@ final class ReelsBridgeViewController: CAPBridgeViewController, MapControllerDel
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         startMapEngineIfReady()
+        showLaunchSplashIfNeeded()
+    }
+
+    private func showLaunchSplashIfNeeded() {
+        guard !launchSplashShown else { return }
+        launchSplashShown = true
+        let splash = UIView(frame: view.bounds)
+        splash.backgroundColor = .white
+        splash.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        splash.isUserInteractionEnabled = true
+
+        let stack = UIStackView()
+        stack.axis = .vertical
+        stack.alignment = .center
+        stack.spacing = 18
+        stack.translatesAutoresizingMaskIntoConstraints = false
+        splash.addSubview(stack)
+
+        let mark = ReelsMapLaunchMark(frame: CGRect(x: 0, y: 0, width: 88, height: 88))
+        let title = UILabel()
+        title.text = "마이릴스맵"
+        title.font = .systemFont(ofSize: 30, weight: .heavy)
+        title.textColor = UIColor(red: 0.12, green: 0.12, blue: 0.14, alpha: 1)
+        let subtitle = UILabel()
+        subtitle.text = "릴스로 찾는 맛집"
+        subtitle.font = .systemFont(ofSize: 18, weight: .bold)
+        subtitle.textColor = .gray
+        let copy = UIStackView(arrangedSubviews: [title, subtitle])
+        copy.axis = .vertical
+        copy.alignment = .center
+        copy.spacing = 4
+        stack.addArrangedSubview(mark)
+        stack.addArrangedSubview(copy)
+        NSLayoutConstraint.activate([
+            stack.centerXAnchor.constraint(equalTo: splash.centerXAnchor),
+            stack.centerYAnchor.constraint(equalTo: splash.centerYAnchor),
+            mark.widthAnchor.constraint(equalToConstant: 88),
+            mark.heightAnchor.constraint(equalToConstant: 88)
+        ])
+        view.addSubview(splash)
+        view.bringSubviewToFront(splash)
+        launchSplashView = splash
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) { [weak self, weak splash] in
+            guard let self, let splash else { return }
+            UIView.animate(withDuration: 0.18, animations: { splash.alpha = 0 }) { _ in
+                splash.removeFromSuperview()
+                self.launchSplashView = nil
+            }
+        }
     }
 
     override func viewWillDisappear(_ animated: Bool) {
