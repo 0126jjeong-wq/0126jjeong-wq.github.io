@@ -338,8 +338,6 @@ final class KakaoNativeMapPlugin: CAPPlugin, CAPBridgedPlugin {
             call.reject("Kakao map view is unavailable")
             return
         }
-        controller.view.setNeedsLayout()
-        controller.view.layoutIfNeeded()
         let cssRect = CGRect(x: x, y: y, width: width, height: height)
         let frame = webView.convert(cssRect, to: controller.view)
         let cutouts = call.getArray("cutouts", [String: Double].self) ?? []
