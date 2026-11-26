@@ -2,7 +2,7 @@
 create table public.user_reel_library (
   user_id uuid not null references auth.users(id) on delete cascade,
   url text not null check (url ~ '^https://www[.]instagram[.]com/(reel|p)/[A-Za-z0-9_-]+/$'),
-  place jsonb check (place is null or (jsonb_typeof(place)='object' and place ?& array['id','name','latitude','longitude'])),
+  place jsonb check (place is null or (jsonb_typeof(place)='object' and place ?& array['id','name','latitude','longitude'])),\n  saved_via text not null default 'unknown' check (saved_via in ('app','web','unknown')),
   created_at timestamptz not null default now(),
   primary key (user_id,url)
 );
