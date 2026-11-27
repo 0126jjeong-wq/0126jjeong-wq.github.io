@@ -192,16 +192,17 @@ Deno.serve(async(req:Request)=>{
       }
       const retentionCutoff=new Date(Date.now()-30*24*60*60*1000).toISOString();
       await admin.from("rights_requests").delete().not("resolved_at","is",null).lt("resolved_at",retentionCutoff);
-      const [{data:inbox,error:inboxError},{data:restaurants,error:restaurantError},{data:requests,error:requestError},{data:drafts,error:draftError}]=await Promise.all([
+      const [{data:inbox,error:inboxError},{data:restaurants,error:restaurantError},{data:requests,error:requestError},{data:drafts,error:draftError},{data:inquiries,error:inquiryError}]=await Promise.all([
         admin.from("instagram_inbox").select("id,source_url,creator_handle,status,submitted_name,restaurant_name,address,latitude,longitude,analysis_status,analysis_error,source_fetch_note,analysis,place_provider,place_id,place_url,source_mode,created_at,updated_at").order("created_at",{ascending:false}).limit(500),
         admin.from("restaurants").select("id,inbox_id,name,address,region,category,latitude,longitude,instagram_url,creator_handle,status,editor_note,source_status,place_provider,place_id,place_url,image_url,image_path,image_rights_status,image_rights_source,image_rights_note,image_rights_confirmed_at,menu_names,menu_source_url,reel_click_count,route_click_count,created_at,updated_at").order("created_at",{ascending:false}).limit(500),
         admin.from("rights_requests").select("id,request_type,requester_role,restaurant_name,source_url,requester_name,requester_email,message,status,created_at,resolved_at").order("created_at",{ascending:false}).limit(300),
-        admin.from("admin_restaurant_drafts").select("id,restaurant_id,inbox_id,payload,created_at,updated_at").eq("admin_email",email).order("updated_at",{ascending:false}).limit(300)
+        admin.from("admin_restaurant_drafts").select("id,restaurant_id,inbox_id,payload,created_at,updated_at").eq("admin_email",email).order("updated_at",{ascending:false}).limit(300),
+        admin.from("one_to_one_inquiries").select("id,category,email,message,user_id,status,admin_reply,replied_at,created_at").order("created_at",{ascending:false}).limit(500)
       ]);
       const {data:analytics,error:analyticsError}=await admin.rpc("get_admin_engagement_analytics");
-      if(inboxError||restaurantError||requestError||draftError||analyticsError)throw inboxError||restaurantError||requestError||draftError||analyticsError;
+      if(inboxError||restaurantError||requestError||draftError||inquiryError||analyticsError)throw inboxError||restaurantError||requestError||draftError||inquiryError||analyticsError;
       const [safeRestaurants,safeDrafts]=await Promise.all([signRestaurantImages(admin,restaurants||[]),signDraftImages(admin,drafts||[])]);
-      return json({ok:true,user:{email},kakao_configured:Boolean(Deno.env.get("KAKAO_REST_API_KEY")),inbox:inbox||[],restaurants:safeRestaurants,requests:requests||[],drafts:safeDrafts,analytics:analytics||{}});
+      return json({ok:true,user:{email},kakao_configured:Boolean(Deno.env.get("KAKAO_REST_API_KEY")),inbox:inbox||[],restaurants:safeRestaurants,requests:requests||[],inquiries:inquiries||[],drafts:safeDrafts,analytics:analytics||{}});
     }
 
     const body=await req.json(),action=text(body?.action,80);
@@ -356,6 +357,13 @@ Deno.serve(async(req:Request)=>{
       if(!id)return json({ok:false,error:"id required"},400);
       const {data,error}=await admin.from("rights_requests").update({status,resolved_at:new Date().toISOString()}).eq("id",id).select().single();if(error)throw error;
       return json({ok:true,request:data});
+    }
+    if(action==="reply_inquiry"){
+      const id=Number(body?.id),reply=text(body?.reply,5000);
+      if(!Number.isSafeInteger(id)||id<1||reply.length<1)return json({ok:false,error:"문의와 답변 내용을 확인해주세요."},400);
+      const {data,error}=await admin.from("one_to_one_inquiries").update({admin_reply:reply,status:"answered",replied_at:new Date().toISOString()}).eq("id",id).select("id,status,admin_reply,replied_at").single();
+      if(error)throw error;
+      return json({ok:true,inquiry:data});
     }
     return json({ok:false,error:"Unknown action"},400);
   }catch(error){return json({ok:false,error:error instanceof Error?error.message:String(error)},500)}
